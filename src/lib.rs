@@ -12,7 +12,8 @@ use extensions::{
 use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
 use sol_types::EscrowClaimed;
-use types::{PublicProvider, WalletProvider};
+use std::sync::Arc;
+use types::{PublicProvider, SharedPublicProvider, SharedWalletProvider, WalletProvider};
 
 use crate::clients::{
     arbiters::ArbitersAddresses, attestation::AttestationAddresses, erc20::Erc20Addresses,
@@ -102,8 +103,8 @@ impl Default for DefaultExtensionConfig {
 
 #[derive(Clone)]
 pub struct AlkahestClient<Extensions: AlkahestExtension = extensions::NoExtension> {
-    pub wallet_provider: WalletProvider,
-    pub public_provider: PublicProvider,
+    pub wallet_provider: SharedWalletProvider,
+    pub public_provider: SharedPublicProvider,
     pub address: Address,
     pub extensions: Extensions,
     private_key: PrivateKeySigner,
@@ -117,8 +118,8 @@ impl AlkahestClient<extensions::NoExtension> {
         rpc_url: impl ToString + Clone + Send,
     ) -> eyre::Result<Self> {
         let wallet_provider =
-            utils::get_wallet_provider(private_key.clone(), rpc_url.clone()).await?;
-        let public_provider = utils::get_public_provider(rpc_url.clone()).await?;
+            Arc::new(utils::get_wallet_provider(private_key.clone(), rpc_url.clone()).await?);
+        let public_provider = Arc::new(utils::get_public_provider(rpc_url.clone()).await?);
 
         Ok(AlkahestClient {
             wallet_provider,
@@ -140,10 +141,15 @@ impl AlkahestClient<BaseExtensions> {
         config: Option<DefaultExtensionConfig>,
     ) -> eyre::Result<Self> {
         let wallet_provider =
-            utils::get_wallet_provider(private_key.clone(), rpc_url.clone()).await?;
-        let public_provider = utils::get_public_provider(rpc_url.clone()).await?;
+            Arc::new(utils::get_wallet_provider(private_key.clone(), rpc_url.clone()).await?);
+        let public_provider = Arc::new(utils::get_public_provider(rpc_url.clone()).await?);
 
-        let extensions = BaseExtensions::init(private_key.clone(), rpc_url.clone(), config).await?;
+        let providers = crate::types::ProviderContext {
+            wallet: wallet_provider.clone(),
+            public: public_provider.clone(),
+            signer: private_key.clone(),
+        };
+        let extensions = BaseExtensions::init(private_key.clone(), providers, config).await?;
 
         Ok(AlkahestClient {
             wallet_provider,
@@ -162,8 +168,12 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
         self,
         config: Option<NewExt::Config>,
     ) -> eyre::Result<AlkahestClient<extensions::JoinExtension<Extensions, NewExt>>> {
-        let new_extension =
-            NewExt::init(self.private_key.clone(), self.rpc_url.clone(), config).await?;
+        let providers = crate::types::ProviderContext {
+            wallet: self.wallet_provider.clone(),
+            public: self.public_provider.clone(),
+            signer: self.private_key.clone(),
+        };
+        let new_extension = NewExt::init(self.private_key.clone(), providers, config).await?;
 
         let joined_extensions = extensions::JoinExtension {
             left: self.extensions,

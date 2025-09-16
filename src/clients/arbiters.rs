@@ -3,13 +3,11 @@ use crate::{
     contracts,
     extensions::{AlkahestExtension, ContractModule},
     types::{PublicProvider, WalletProvider},
-    utils,
 };
 use alloy::{
     primitives::{Address, Bytes, FixedBytes, Log},
     providers::Provider as _,
     rpc::types::{Filter, TransactionReceipt},
-    signers::local::PrivateKeySigner,
     sol,
     sol_types::{SolEvent as _, SolValue as _},
 };
@@ -70,7 +68,6 @@ pub struct ArbitersAddresses {
 
 #[derive(Clone)]
 pub struct ArbitersModule {
-    signer: PrivateKeySigner,
     public_provider: PublicProvider,
     wallet_provider: WalletProvider,
 
@@ -239,11 +236,15 @@ impl AlkahestExtension for ArbitersModule {
     type Config = ArbitersAddresses;
 
     async fn init(
-        private_key: PrivateKeySigner,
-        rpc_url: impl ToString + Clone + Send,
+        _signer: alloy::signers::local::PrivateKeySigner,
+        providers: crate::types::ProviderContext,
         config: Option<Self::Config>,
     ) -> eyre::Result<Self> {
-        Self::new(private_key, rpc_url, config).await
+        Self::new(
+            (*providers.public).clone(),
+            (*providers.wallet).clone(),
+            config,
+        )
     }
 }
 
@@ -608,19 +609,14 @@ impl_encode_and_decode!(
 );
 
 impl ArbitersModule {
-    pub async fn new(
-        signer: PrivateKeySigner,
-        rpc_url: impl ToString + Clone,
+    pub fn new(
+        public_provider: PublicProvider,
+        wallet_provider: WalletProvider,
         addresses: Option<ArbitersAddresses>,
     ) -> eyre::Result<Self> {
-        let public_provider = utils::get_public_provider(rpc_url.clone()).await?;
-        let wallet_provider = utils::get_wallet_provider(signer.clone(), rpc_url.clone()).await?;
-
         Ok(ArbitersModule {
-            signer: signer,
-            public_provider: public_provider.clone(),
+            public_provider,
             wallet_provider,
-
             addresses: addresses.unwrap_or_default(),
         })
     }

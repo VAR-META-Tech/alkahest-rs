@@ -33,20 +33,20 @@ pub trait AlkahestExtension: Clone + Send + Sync + 'static {
 
     /// Initialize the extension with its specific configuration
     fn init(
-        private_key: PrivateKeySigner,
-        rpc_url: impl ToString + Clone + Send,
+        signer: PrivateKeySigner,
+        providers: crate::types::ProviderContext,
         config: Option<Self::Config>,
     ) -> impl std::future::Future<Output = eyre::Result<Self>> + Send;
 
     /// Initialize with default configuration (when Config implements Default)
     fn init_default(
-        private_key: PrivateKeySigner,
-        rpc_url: impl ToString + Clone + Send,
+        signer: PrivateKeySigner,
+        providers: crate::types::ProviderContext,
     ) -> impl std::future::Future<Output = eyre::Result<Self>> + Send
     where
         Self::Config: Default,
     {
-        Self::init(private_key, rpc_url, Some(Self::Config::default()))
+        Self::init(signer, providers, Some(Self::Config::default()))
     }
 
     /// Recursively search for a client by type - this is the main method
@@ -75,8 +75,8 @@ impl AlkahestExtension for NoExtension {
     type Config = ();
 
     async fn init(
-        _private_key: PrivateKeySigner,
-        _rpc_url: impl ToString + Clone + Send,
+        _signer: PrivateKeySigner,
+        _providers: crate::types::ProviderContext,
         _config: Option<Self::Config>,
     ) -> eyre::Result<Self> {
         Ok(NoExtension)
@@ -105,7 +105,7 @@ impl<A: AlkahestExtension, B: AlkahestExtension> AlkahestExtension for JoinExten
 
     async fn init(
         _private_key: PrivateKeySigner,
-        _rpc_url: impl ToString + Clone + Send,
+        _providers: crate::types::ProviderContext,
         _config: Option<Self::Config>,
     ) -> eyre::Result<Self> {
         // This method is not meant to be called directly.
@@ -144,7 +144,7 @@ impl AlkahestExtension for BaseExtensions {
 
     async fn init(
         private_key: PrivateKeySigner,
-        rpc_url: impl ToString + Clone + Send,
+        providers: crate::types::ProviderContext,
         config: Option<DefaultExtensionConfig>,
     ) -> eyre::Result<Self> {
         // Extract individual configs from the combined config
@@ -163,27 +163,27 @@ impl AlkahestExtension for BaseExtensions {
         });
 
         // Initialize each module with its specific configuration
-        let erc20 = Erc20Module::init(private_key.clone(), rpc_url.clone(), erc20_config).await?;
+        let erc20 = Erc20Module::init(private_key.clone(), providers.clone(), erc20_config).await?;
         let erc721 =
-            Erc721Module::init(private_key.clone(), rpc_url.clone(), erc721_config).await?;
+            Erc721Module::init(private_key.clone(), providers.clone(), erc721_config).await?;
         let erc1155 =
-            Erc1155Module::init(private_key.clone(), rpc_url.clone(), erc1155_config).await?;
+            Erc1155Module::init(private_key.clone(), providers.clone(), erc1155_config).await?;
         let token_bundle =
-            TokenBundleModule::init(private_key.clone(), rpc_url.clone(), token_bundle_config)
+            TokenBundleModule::init(private_key.clone(), providers.clone(), token_bundle_config)
                 .await?;
         let attestation =
-            AttestationModule::init(private_key.clone(), rpc_url.clone(), attestation_config)
+            AttestationModule::init(private_key.clone(), providers.clone(), attestation_config)
                 .await?;
         let string_obligation = StringObligationModule::init(
             private_key.clone(),
-            rpc_url.clone(),
+            providers.clone(),
             string_obligation_config,
         )
         .await?;
         let arbiters =
-            ArbitersModule::init(private_key.clone(), rpc_url.clone(), arbiters_config).await?;
+            ArbitersModule::init(private_key.clone(), providers.clone(), arbiters_config).await?;
         let oracle =
-            OracleModule::init(private_key.clone(), rpc_url.clone(), oracle_config).await?;
+            OracleModule::init(private_key.clone(), providers.clone(), oracle_config).await?;
 
         Ok(BaseExtensions {
             erc20,

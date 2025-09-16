@@ -12,7 +12,6 @@ use alloy::{
     providers::Provider,
     pubsub::SubscriptionStream,
     rpc::types::{Filter, FilterBlockOption, Log, TransactionReceipt, ValueOrArray},
-    signers::local::PrivateKeySigner,
     sol,
     sol_types::SolEvent,
 };
@@ -32,7 +31,6 @@ use crate::{
     },
     extensions::AlkahestExtension,
     types::{PublicProvider, WalletProvider},
-    utils,
 };
 
 #[derive(Debug, Clone)]
@@ -43,9 +41,9 @@ pub struct OracleAddresses {
 
 #[derive(Clone)]
 pub struct OracleModule {
-    _signer: PrivateKeySigner,
     public_provider: PublicProvider,
     wallet_provider: WalletProvider,
+    signer_address: Address,
 
     pub addresses: OracleAddresses,
 }
@@ -205,11 +203,16 @@ impl AlkahestExtension for OracleModule {
     type Config = OracleAddresses;
 
     async fn init(
-        private_key: PrivateKeySigner,
-        rpc_url: impl ToString + Clone + Send,
+        _signer: alloy::signers::local::PrivateKeySigner,
+        providers: crate::types::ProviderContext,
         config: Option<Self::Config>,
     ) -> eyre::Result<Self> {
-        Self::new(private_key, rpc_url, config).await
+        Self::new(
+            (*providers.public).clone(),
+            (*providers.wallet).clone(),
+            providers.signer.address(),
+            config,
+        )
     }
 }
 
@@ -271,18 +274,16 @@ pub struct ListenAndArbitrateForEscrowResult<ObligationData: SolType, DemandData
 }
 
 impl OracleModule {
-    pub async fn new(
-        signer: PrivateKeySigner,
-        rpc_url: impl ToString + Clone,
+    pub fn new(
+        public_provider: PublicProvider,
+        wallet_provider: WalletProvider,
+        signer_address: Address,
         addresses: Option<OracleAddresses>,
     ) -> eyre::Result<Self> {
-        let public_provider = utils::get_public_provider(rpc_url.clone()).await?;
-        let wallet_provider = utils::get_wallet_provider(signer.clone(), rpc_url.clone()).await?;
-
         Ok(OracleModule {
-            _signer: signer,
-            public_provider: public_provider.clone(),
+            public_provider,
             wallet_provider,
+            signer_address,
             addresses: addresses.unwrap_or_default(),
         })
     }
@@ -304,7 +305,7 @@ impl OracleModule {
 
         let nonce = self
             .wallet_provider
-            .get_transaction_count(self._signer.address())
+            .get_transaction_count(self.signer_address)
             .await?;
 
         let tx = trusted_oracle_arbiter
@@ -394,7 +395,7 @@ impl OracleModule {
                 self.addresses.trusted_oracle_arbiter,
                 TrustedOracleArbiter::ArbitrationMade::SIGNATURE_HASH,
                 Some(a.uid),
-                Some(self._signer.address()),
+                Some(self.signer_address),
             );
             async move {
                 let logs = self.public_provider.get_logs(&filter).await?;
@@ -418,7 +419,7 @@ impl OracleModule {
                 self.addresses.trusted_oracle_arbiter,
                 TrustedOracleArbiter::ArbitrationRequested::SIGNATURE_HASH,
                 Some(a.uid),
-                Some(self._signer.address()),
+                Some(self.signer_address),
             );
             async move {
                 let logs = self.public_provider.get_logs(&filter).await?;
@@ -523,7 +524,7 @@ impl OracleModule {
     ) -> eyre::Result<Vec<Decision<ObligationData, ()>>> {
         let base_nonce = self
             .wallet_provider
-            .get_transaction_count(self._signer.address())
+            .get_transaction_count(self.signer_address)
             .await?;
 
         let arbitration_futs = attestations
@@ -640,7 +641,7 @@ impl OracleModule {
         let wallet_provider = self.wallet_provider.clone();
         let eas_address = self.addresses.eas;
         let arbiter_address = self.addresses.trusted_oracle_arbiter;
-        let signer_address = self._signer.address();
+        let signer_address = self.signer_address;
         let public_provider = self.public_provider.clone();
         let options = options.clone();
 
@@ -893,7 +894,7 @@ impl OracleModule {
                     self.addresses.trusted_oracle_arbiter,
                     TrustedOracleArbiter::ArbitrationMade::SIGNATURE_HASH,
                     Some(attestation.uid),
-                    Some(self._signer.address()),
+                    Some(self.signer_address),
                 );
                 let logs_result = self.public_provider.get_logs(&filter).await;
 
@@ -934,7 +935,7 @@ impl OracleModule {
 
             let Ok(nonce) = self
                 .wallet_provider
-                .get_transaction_count(self._signer.address())
+                .get_transaction_count(self.signer_address)
                 .await
             else {
                 continue;
@@ -991,7 +992,7 @@ impl OracleModule {
                 self.addresses.trusted_oracle_arbiter,
                 TrustedOracleArbiter::ArbitrationRequested::SIGNATURE_HASH,
                 None,
-                Some(self._signer.address()),
+                Some(self.signer_address),
             )
         } else {
             self.make_filter(&fulfillment.filter)
@@ -1043,7 +1044,7 @@ impl OracleModule {
                 self.addresses.trusted_oracle_arbiter,
                 TrustedOracleArbiter::ArbitrationRequested::SIGNATURE_HASH,
                 None,
-                Some(self._signer.address()),
+                Some(self.signer_address),
             )
         } else {
             self.make_filter(&fulfillment.filter)
@@ -1095,7 +1096,7 @@ impl OracleModule {
                 self.addresses.trusted_oracle_arbiter,
                 TrustedOracleArbiter::ArbitrationRequested::SIGNATURE_HASH,
                 None,
-                Some(self._signer.address()),
+                Some(self.signer_address),
             )
         } else {
             self.make_filter(&fulfillment.filter)
@@ -1149,7 +1150,7 @@ impl OracleModule {
                 self.addresses.trusted_oracle_arbiter,
                 TrustedOracleArbiter::ArbitrationRequested::SIGNATURE_HASH,
                 None,
-                Some(self._signer.address()),
+                Some(self.signer_address),
             )
         } else {
             self.make_filter(&fulfillment_filter)
@@ -1274,7 +1275,7 @@ impl OracleModule {
 
         let base_nonce = self
             .wallet_provider
-            .get_transaction_count(self._signer.address())
+            .get_transaction_count(self.signer_address)
             .await?;
 
         let arbitration_futs = fulfillment_attestations
@@ -1540,7 +1541,7 @@ impl OracleModule {
                     self.addresses.trusted_oracle_arbiter,
                     TrustedOracleArbiter::ArbitrationRequested::SIGNATURE_HASH,
                     None,
-                    Some(self._signer.address()),
+                    Some(self.signer_address),
                 )
             } else {
                 self.make_filter(&fulfillment.filter)
@@ -1550,7 +1551,7 @@ impl OracleModule {
             let mut stream = sub.into_stream();
             let eas_address = eas_address.clone();
             let wallet_provider = Arc::new(wallet_provider.clone());
-            let signer_address = self._signer.address();
+            let signer_address = self.signer_address;
             let options = options.clone();
 
             tokio::spawn(async move {
@@ -1797,7 +1798,7 @@ impl OracleModule {
         let arbiter_address = self.addresses.trusted_oracle_arbiter;
         let eas = IEAS::new(eas_address, &*wallet_provider);
         let arbiter = TrustedOracleArbiter::new(arbiter_address, &*wallet_provider);
-        let signer_address = self._signer.address();
+        let signer_address = self.signer_address;
 
         loop {
             tokio::select! {

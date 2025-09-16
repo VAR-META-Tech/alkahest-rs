@@ -9,8 +9,8 @@ use crate::addresses::BASE_SEPOLIA_ADDRESSES;
 use crate::contracts::IEAS::Attestation;
 use crate::contracts::{self, IEAS};
 use crate::extensions::{AlkahestExtension, ContractModule};
+use crate::types::WalletProvider;
 use crate::types::{ArbiterData, DecodedAttestation};
-use crate::{types::WalletProvider, utils};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttestationAddresses {
@@ -71,17 +71,14 @@ impl AttestationModule {
     /// * `private_key` - The private key for signing transactions
     /// * `rpc_url` - The RPC endpoint URL
     /// * `addresses` - Optional custom contract addresses
-    pub async fn new(
+    pub fn new(
         signer: PrivateKeySigner,
-        rpc_url: impl ToString + Clone,
+        wallet_provider: WalletProvider,
         addresses: Option<AttestationAddresses>,
     ) -> eyre::Result<Self> {
-        let wallet_provider = utils::get_wallet_provider(signer.clone(), rpc_url.clone()).await?;
-
         Ok(AttestationModule {
             _signer: signer,
             wallet_provider,
-
             addresses: addresses.unwrap_or_default(),
         })
     }
@@ -372,13 +369,12 @@ impl AttestationModule {
 
 impl AlkahestExtension for AttestationModule {
     type Config = AttestationAddresses;
-
     async fn init(
-        private_key: PrivateKeySigner,
-        rpc_url: impl ToString + Clone + Send,
+        signer: PrivateKeySigner,
+        providers: crate::types::ProviderContext,
         config: Option<Self::Config>,
     ) -> eyre::Result<Self> {
-        Self::new(private_key, rpc_url, config).await
+        Self::new(signer, (*providers.wallet).clone(), config)
     }
 }
 

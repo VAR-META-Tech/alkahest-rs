@@ -11,7 +11,7 @@ use crate::types::{
     ApprovalPurpose, ArbiterData, DecodedAttestation, Erc20Data, Erc721Data, Erc1155Data,
     TokenBundleData,
 };
-use crate::{types::WalletProvider, utils};
+use crate::types::{ProviderContext, WalletProvider};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -79,13 +79,11 @@ impl Erc721Module {
     ///
     /// # Returns
     /// * `Result<Self>` - The initialized client instance
-    pub async fn new(
+    pub fn new(
         signer: PrivateKeySigner,
-        rpc_url: impl ToString + Clone,
+        wallet_provider: WalletProvider,
         addresses: Option<Erc721Addresses>,
     ) -> eyre::Result<Self> {
-        let wallet_provider = utils::get_wallet_provider(signer.clone(), rpc_url.clone()).await?;
-
         Ok(Erc721Module {
             signer,
             wallet_provider,
@@ -615,13 +613,12 @@ impl Erc721Module {
 
 impl AlkahestExtension for Erc721Module {
     type Config = Erc721Addresses;
-
     async fn init(
-        private_key: PrivateKeySigner,
-        rpc_url: impl ToString + Clone + Send,
+        signer: PrivateKeySigner,
+        providers: ProviderContext,
         config: Option<Self::Config>,
     ) -> eyre::Result<Self> {
-        Self::new(private_key, rpc_url, config).await
+        Self::new(signer, (*providers.wallet).clone(), config)
     }
 }
 

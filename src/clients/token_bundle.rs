@@ -10,8 +10,7 @@ use crate::extensions::ContractModule;
 use crate::types::{ArbiterData, DecodedAttestation, TokenBundleData};
 use crate::{
     extensions::AlkahestExtension,
-    types::{ApprovalPurpose, WalletProvider},
-    utils,
+    types::{ApprovalPurpose, ProviderContext, WalletProvider},
 };
 use serde::{Deserialize, Serialize};
 
@@ -80,13 +79,11 @@ impl TokenBundleModule {
     ///
     /// # Returns
     /// * `Result<Self>` - The initialized client instance
-    pub async fn new(
+    pub fn new(
         signer: PrivateKeySigner,
-        rpc_url: impl ToString + Clone,
+        wallet_provider: WalletProvider,
         addresses: Option<TokenBundleAddresses>,
     ) -> eyre::Result<Self> {
-        let wallet_provider = utils::get_wallet_provider(signer.clone(), rpc_url.clone()).await?;
-
         Ok(TokenBundleModule {
             signer,
             wallet_provider,
@@ -438,11 +435,11 @@ impl AlkahestExtension for TokenBundleModule {
     type Config = TokenBundleAddresses;
 
     async fn init(
-        private_key: PrivateKeySigner,
-        rpc_url: impl ToString + Clone + Send,
+        signer: PrivateKeySigner,
+        providers: ProviderContext,
         config: Option<Self::Config>,
     ) -> eyre::Result<Self> {
-        Self::new(private_key, rpc_url, config).await
+        Self::new(signer, (*providers.wallet).clone(), config)
     }
 }
 

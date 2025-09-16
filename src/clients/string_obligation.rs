@@ -2,7 +2,7 @@ use crate::{
     addresses::BASE_SEPOLIA_ADDRESSES,
     contracts,
     extensions::{AlkahestExtension, ContractModule},
-    types::{DecodedAttestation, WalletProvider},
+    types::{DecodedAttestation, ProviderContext, WalletProvider},
 };
 use alloy::providers::Provider;
 use alloy::{
@@ -58,18 +58,16 @@ impl StringObligationModule {
     ///
     /// # Arguments
     /// * `private_key` - The private key for signing transactions
-    /// * `rpc_url` - The RPC endpoint URL
+    /// * `wallet_provider` - The shared wallet provider to use for sending transactions
     /// * `addresses` - Optional custom contract addresses, uses defaults if None
     ///
     /// # Returns
     /// * `Result<Self>` - The initialized client instance with all sub-clients configured
-    pub async fn new(
+    pub fn new(
         signer: PrivateKeySigner,
-        rpc_url: impl ToString + Clone,
+        wallet_provider: WalletProvider,
         addresses: Option<StringObligationAddresses>,
     ) -> eyre::Result<Self> {
-        let wallet_provider = crate::utils::get_wallet_provider(signer.clone(), rpc_url).await?;
-
         Ok(StringObligationModule {
             _signer: signer,
             wallet_provider,
@@ -174,10 +172,10 @@ impl AlkahestExtension for StringObligationModule {
     type Config = StringObligationAddresses;
 
     async fn init(
-        private_key: PrivateKeySigner,
-        rpc_url: impl ToString + Clone + Send,
+        signer: PrivateKeySigner,
+        providers: ProviderContext,
         config: Option<Self::Config>,
     ) -> eyre::Result<Self> {
-        Self::new(private_key, rpc_url, config).await
+        Self::new(signer, (*providers.wallet).clone(), config)
     }
 }
