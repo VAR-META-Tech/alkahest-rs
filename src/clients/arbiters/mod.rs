@@ -5,14 +5,18 @@ use crate::{
     types::{PublicProvider, WalletProvider},
 };
 use alloy::{
-    primitives::{Address, Bytes, FixedBytes, Log},
+    primitives::{Address, FixedBytes, Log},
     providers::Provider as _,
     rpc::types::{Filter, TransactionReceipt},
     sol,
-    sol_types::{SolEvent as _, SolValue as _},
+    sol_types::SolEvent as _,
 };
 use futures_util::StreamExt as _;
 use serde::{Deserialize, Serialize};
+
+pub mod attestation_properties;
+pub mod confirmation;
+pub mod logical;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArbitersAddresses {
@@ -64,6 +68,7 @@ pub struct ArbitersAddresses {
     pub revocable_confirmation_arbiter: Address,
     pub revocable_confirmation_arbiter_composing: Address,
     pub unrevocable_confirmation_arbiter: Address,
+    pub unrevocable_confirmation_arbiter_composing: Address,
 }
 
 #[derive(Clone)]
@@ -112,126 +117,6 @@ impl ContractModule for ArbitersModule {
     }
 }
 
-sol! {
-    contract AttesterArbiterComposing {
-        struct DemandData {
-            address baseArbiter;
-            bytes baseDemand;
-            address attester;
-        }
-    }
-}
-
-sol! {
-    contract ExpirationTimeAfterArbiterComposing {
-        struct DemandData {
-            address baseArbiter;
-            bytes baseDemand;
-            uint64 expirationTime;
-        }
-    }
-}
-
-sol! {
-    contract ExpirationTimeBeforeArbiterComposing {
-        struct DemandData {
-            address baseArbiter;
-            bytes baseDemand;
-            uint64 expirationTime;
-        }
-    }
-}
-
-sol! {
-    contract ExpirationTimeEqualArbiterComposing {
-        struct DemandData {
-            address baseArbiter;
-            bytes baseDemand;
-            uint64 expirationTime;
-        }
-    }
-}
-
-sol! {
-    contract RecipientArbiterComposing {
-        struct DemandData {
-            address baseArbiter;
-            bytes baseDemand;
-            address recipient;
-        }
-    }
-}
-
-sol! {
-    contract RefUidArbiterComposing {
-        struct DemandData {
-            address baseArbiter;
-            bytes baseDemand;
-            bytes32 refUID;
-        }
-    }
-}
-
-sol! {
-    contract RevocableArbiterComposing {
-        struct DemandData {
-            address baseArbiter;
-            bytes baseDemand;
-            bool revocable;
-        }
-    }
-}
-
-sol! {
-    contract SchemaArbiterComposing {
-        struct DemandData {
-            address baseArbiter;
-            bytes baseDemand;
-            bytes32 schema;
-        }
-    }
-}
-
-sol! {
-    contract TimeAfterArbiterComposing {
-        struct DemandData {
-            address baseArbiter;
-            bytes baseDemand;
-            uint64 time;
-        }
-    }
-}
-
-sol! {
-    contract TimeBeforeArbiterComposing {
-        struct DemandData {
-            address baseArbiter;
-            bytes baseDemand;
-            uint64 time;
-        }
-    }
-}
-
-sol! {
-    contract TimeEqualArbiterComposing {
-        struct DemandData {
-            address baseArbiter;
-            bytes baseDemand;
-            uint64 time;
-        }
-    }
-}
-
-sol! {
-    contract UidArbiterComposing {
-        struct DemandData {
-            address baseArbiter;
-            bytes baseDemand;
-            bytes32 uid;
-        }
-    }
-}
-
 impl AlkahestExtension for ArbitersModule {
     type Config = ArbitersAddresses;
 
@@ -245,131 +130,6 @@ impl AlkahestExtension for ArbitersModule {
             (*providers.wallet).clone(),
             config,
         )
-    }
-}
-
-sol! {
-    contract AttesterArbiterNonComposing {
-        struct DemandData {
-            address attester;
-        }
-    }
-}
-
-sol! {
-    contract ExpirationTimeAfterArbiterNonComposing {
-        struct DemandData {
-            uint64 expirationTime;
-        }
-    }
-}
-
-sol! {
-    contract ExpirationTimeBeforeArbiterNonComposing {
-        struct DemandData {
-            uint64 expirationTime;
-        }
-    }
-}
-
-sol! {
-    contract ExpirationTimeEqualArbiterNonComposing {
-        struct DemandData {
-            uint64 expirationTime;
-        }
-    }
-}
-
-sol! {
-    contract RecipientArbiterNonComposing {
-        struct DemandData {
-            address recipient;
-        }
-    }
-}
-
-sol! {
-    contract RefUidArbiterNonComposing {
-        struct DemandData {
-            bytes32 refUID;
-        }
-    }
-}
-
-sol! {
-    contract RevocableArbiterNonComposing {
-        struct DemandData {
-            bool revocable;
-        }
-    }
-}
-
-sol! {
-    contract SchemaArbiterNonComposing {
-        struct DemandData {
-            bytes32 schema;
-        }
-    }
-}
-
-sol! {
-    contract TimeAfterArbiterNonComposing {
-        struct DemandData {
-            uint64 time;
-        }
-    }
-}
-
-sol! {
-    contract TimeBeforeArbiterNonComposing {
-        struct DemandData {
-            uint64 time;
-        }
-    }
-}
-
-sol! {
-    contract TimeEqualArbiterNonComposing {
-        struct DemandData {
-            uint64 time;
-        }
-    }
-}
-
-sol! {
-    contract UidArbiterNonComposing {
-        struct DemandData {
-            bytes32 uid;
-        }
-    }
-}
-
-// confirmation arbiters
-
-sol! {
-    contract ConfirmationArbiterComposing {
-        struct DemandData {
-            address baseArbiter;
-            bytes baseDemand;
-        }
-    }
-}
-
-sol! {
-    contract RevocableConfirmationArbiterComposing {
-        struct DemandData {
-            address baseArbiter;
-            bytes baseDemand;
-        }
-    }
-}
-
-sol! {
-    contract UnrevocableArbiterComposing {
-        struct DemandData {
-            address baseArbiter;
-            bytes baseDemand;
-        }
     }
 }
 
@@ -408,175 +168,25 @@ sol! {
     }
 }
 
-//logical arbiters
-
-sol! {
-    contract MultiArbiter {
-        // Shared structure for both AnyArbiter and AllArbiter
-        struct DemandData {
-            address[] arbiters;
-            bytes[] demands;
-        }
-    }
-}
-
-sol! {
-    contract NotArbiter {
-        struct DemandData {
-            address baseArbiter;
-            bytes baseDemand;
-        }
-    }
-}
-
+#[macro_export]
 macro_rules! impl_encode_and_decode {
     ($contract:ident, $encode_fn:ident, $decode_fn:ident) => {
-        impl ArbitersModule {
-            pub fn $encode_fn(demand: &$contract::DemandData) -> Bytes {
+        impl $crate::clients::arbiters::ArbitersModule {
+            pub fn $encode_fn(demand: &$contract::DemandData) -> alloy::primitives::Bytes {
+                use alloy::sol_types::SolValue as _;
                 demand.abi_encode().into()
             }
 
-            pub fn $decode_fn(data: &Bytes) -> eyre::Result<$contract::DemandData> {
+            pub fn $decode_fn(
+                data: &alloy::primitives::Bytes,
+            ) -> eyre::Result<$contract::DemandData> {
+                use alloy::sol_types::SolValue as _;
                 Ok($contract::DemandData::abi_decode(data)?)
             }
         }
     };
 }
-impl_encode_and_decode!(
-    AttesterArbiterComposing,
-    encode_attester_arbiter_composing_demand,
-    decode_attester_arbiter_composing_demand
-);
-impl_encode_and_decode!(
-    ExpirationTimeAfterArbiterComposing,
-    encode_expiration_time_after_arbiter_composing_demand,
-    decode_expiration_time_after_arbiter_composing_demand
-);
-impl_encode_and_decode!(
-    ExpirationTimeBeforeArbiterComposing,
-    encode_expiration_time_before_arbiter_composing_demand,
-    decode_expiration_time_before_arbiter_composing_demand
-);
-impl_encode_and_decode!(
-    ExpirationTimeEqualArbiterComposing,
-    encode_expiration_time_equal_arbiter_composing_demand,
-    decode_expiration_time_equal_arbiter_composing_demand
-);
-impl_encode_and_decode!(
-    RecipientArbiterComposing,
-    encode_recipient_arbiter_composing_demand,
-    decode_recipient_arbiter_composing_demand
-);
-impl_encode_and_decode!(
-    RefUidArbiterComposing,
-    encode_ref_uid_arbiter_composing_demand,
-    decode_ref_uid_arbiter_composing_demand
-);
-impl_encode_and_decode!(
-    RevocableArbiterComposing,
-    encode_revocable_arbiter_composing_demand,
-    decode_revocable_arbiter_composing_demand
-);
-impl_encode_and_decode!(
-    SchemaArbiterComposing,
-    encode_schema_arbiter_composing_demand,
-    decode_schema_arbiter_composing_demand
-);
-impl_encode_and_decode!(
-    TimeAfterArbiterComposing,
-    encode_time_after_arbiter_composing_demand,
-    decode_time_after_arbiter_composing_demand
-);
-impl_encode_and_decode!(
-    TimeBeforeArbiterComposing,
-    encode_time_before_arbiter_composing_demand,
-    decode_time_before_arbiter_composing_demand
-);
-impl_encode_and_decode!(
-    TimeEqualArbiterComposing,
-    encode_time_equal_arbiter_composing_demand,
-    decode_time_equal_arbiter_composing_demand
-);
-impl_encode_and_decode!(
-    UidArbiterComposing,
-    encode_uid_arbiter_composing_demand,
-    decode_uid_arbiter_composing_demand
-);
-impl_encode_and_decode!(
-    AttesterArbiterNonComposing,
-    encode_attester_arbiter_non_composing_demand,
-    decode_attester_arbiter_non_composing_demand
-);
-impl_encode_and_decode!(
-    ExpirationTimeAfterArbiterNonComposing,
-    encode_expiration_time_after_arbiter_non_composing_demand,
-    decode_expiration_time_after_arbiter_non_composing_demand
-);
-impl_encode_and_decode!(
-    ExpirationTimeBeforeArbiterNonComposing,
-    encode_expiration_time_before_arbiter_non_composing_demand,
-    decode_expiration_time_before_arbiter_non_composing_demand
-);
-impl_encode_and_decode!(
-    ExpirationTimeEqualArbiterNonComposing,
-    encode_expiration_time_equal_arbiter_non_composing_demand,
-    decode_expiration_time_equal_arbiter_non_composing_demand
-);
-impl_encode_and_decode!(
-    RecipientArbiterNonComposing,
-    encode_recipient_arbiter_non_composing_demand,
-    decode_recipient_arbiter_non_composing_demand
-);
-impl_encode_and_decode!(
-    RefUidArbiterNonComposing,
-    encode_ref_uid_arbiter_non_composing_demand,
-    decode_ref_uid_arbiter_non_composing_demand
-);
-impl_encode_and_decode!(
-    RevocableArbiterNonComposing,
-    encode_revocable_arbiter_non_composing_demand,
-    decode_revocable_arbiter_non_composing_demand
-);
-impl_encode_and_decode!(
-    SchemaArbiterNonComposing,
-    encode_schema_arbiter_non_composing_demand,
-    decode_schema_arbiter_non_composing_demand
-);
-impl_encode_and_decode!(
-    TimeAfterArbiterNonComposing,
-    encode_time_after_arbiter_non_composing_demand,
-    decode_time_after_arbiter_non_composing_demand
-);
-impl_encode_and_decode!(
-    TimeBeforeArbiterNonComposing,
-    encode_time_before_arbiter_non_composing_demand,
-    decode_time_before_arbiter_non_composing_demand
-);
-impl_encode_and_decode!(
-    TimeEqualArbiterNonComposing,
-    encode_time_equal_arbiter_non_composing_demand,
-    decode_time_equal_arbiter_non_composing_demand
-);
-impl_encode_and_decode!(
-    UidArbiterNonComposing,
-    encode_uid_arbiter_non_composing_demand,
-    decode_uid_arbiter_non_composing_demand
-);
-impl_encode_and_decode!(
-    ConfirmationArbiterComposing,
-    encode_confirmation_arbiter_composing_demand,
-    decode_confirmation_arbiter_composing_demand
-);
-impl_encode_and_decode!(
-    RevocableConfirmationArbiterComposing,
-    encode_revocable_confirmation_arbiter_composing_demand,
-    decode_revocable_confirmation_arbiter_composing_demand
-);
-impl_encode_and_decode!(
-    UnrevocableArbiterComposing,
-    encode_unrevocable_arbiter_composing_demand,
-    decode_unrevocable_arbiter_composing_demand
-);
+
 impl_encode_and_decode!(
     TrustedPartyArbiter,
     encode_trusted_party_arbiter_demand,
@@ -596,16 +206,6 @@ impl_encode_and_decode!(
     IntrinsicsArbiter2,
     encode_intrinsics_arbiter2_demand,
     decode_intrinsics_arbiter2_demand
-);
-impl_encode_and_decode!(
-    MultiArbiter,
-    encode_multi_arbiter_demand,
-    decode_multi_arbiter_demand
-);
-impl_encode_and_decode!(
-    NotArbiter,
-    encode_not_arbiter_demand,
-    decode_not_arbiter_demand
 );
 
 impl ArbitersModule {
@@ -689,15 +289,14 @@ mod tests {
 
     use crate::{
         clients::arbiters::{
-            ArbitersModule, IntrinsicsArbiter2, MultiArbiter, RecipientArbiterComposing,
-            SpecificAttestationArbiter, TrustedOracleArbiter, TrustedPartyArbiter,
-            UidArbiterComposing,
+            ArbitersModule, IntrinsicsArbiter2, SpecificAttestationArbiter, TrustedOracleArbiter,
+            TrustedPartyArbiter,
         },
         contracts,
         utils::setup_test_environment,
     };
 
-    fn create_test_attestation(
+    pub(crate) fn create_test_attestation(
         uid: Option<FixedBytes<32>>,
         recipient: Option<Address>,
     ) -> contracts::IEAS::Attestation {
@@ -809,88 +408,6 @@ mod tests {
         assert!(
             result.is_err(),
             "TrustedPartyArbiter should revert with incorrect creator"
-        );
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_recipient_arbiter_with_incorrect_recipient() -> eyre::Result<()> {
-        // Setup test environment
-        let test = setup_test_environment().await?;
-
-        // Create a test attestation with Bob as recipient
-        let bob_address = test.bob.address();
-        let attestation = create_test_attestation(None, Some(bob_address));
-
-        // Create demand data expecting Alice as recipient
-        let alice_address = test.alice.address();
-        let demand_data = RecipientArbiterComposing::DemandData {
-            baseArbiter: test.addresses.arbiters_addresses.clone().trivial_arbiter,
-            baseDemand: Bytes::from(vec![]),
-            recipient: alice_address, // Different from attestation.recipient which is Bob
-        };
-
-        // Encode demand data
-        let demand = ArbitersModule::encode_recipient_arbiter_composing_demand(&demand_data);
-        let counteroffer = FixedBytes::<32>::default();
-
-        // Create RecipientArbiter contract instance
-        let recipient_arbiter = contracts::RecipientArbiter::new(
-            test.addresses.arbiters_addresses.recipient_arbiter,
-            &test.alice_client.public_provider,
-        );
-
-        // Call check_obligation - should revert with RecipientMismatched
-        let result = recipient_arbiter
-            .checkObligation(attestation.clone().into(), demand, counteroffer)
-            .call()
-            .await;
-
-        // We expect this to revert because recipient mismatch
-        assert!(
-            result.is_err(),
-            "RecipientArbiter should revert with incorrect recipient"
-        );
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_recipient_arbiter_with_correct_recipient() -> eyre::Result<()> {
-        // Setup test environment
-        let test = setup_test_environment().await?;
-
-        // Create a test attestation
-        let recipient = test.alice.address();
-        let attestation = create_test_attestation(None, Some(recipient));
-
-        // Create demand data with the correct recipient and TrivialArbiter as base arbiter
-        let demand_data = RecipientArbiterComposing::DemandData {
-            baseArbiter: test.addresses.arbiters_addresses.clone().trivial_arbiter,
-            baseDemand: Bytes::from(vec![]),
-            recipient,
-        };
-
-        // Encode demand data
-        let demand = ArbitersModule::encode_recipient_arbiter_composing_demand(&demand_data);
-        let counteroffer = FixedBytes::<32>::default();
-
-        // Check obligation should return true
-        let recipient_arbiter = contracts::RecipientArbiter::new(
-            test.addresses.arbiters_addresses.recipient_arbiter,
-            &test.alice_client.public_provider,
-        );
-
-        // Call check_obligation
-        let result = recipient_arbiter
-            .checkObligation(attestation.clone().into(), demand, counteroffer)
-            .call()
-            .await?;
-
-        assert!(
-            result,
-            "RecipientArbiter should return true with correct recipient"
         );
 
         Ok(())
@@ -1198,83 +715,6 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_uid_arbiter_with_incorrect_uid() -> eyre::Result<()> {
-        // Setup test environment
-        let test = setup_test_environment().await?;
-
-        // Create a test attestation
-        let uid = FixedBytes::<32>::from_slice(&[1u8; 32]);
-        let attestation = create_test_attestation(Some(uid), None);
-
-        // Create demand data with non-matching UID
-        let different_uid = FixedBytes::<32>::from_slice(&[2u8; 32]);
-        let trivial_arbiter = test.addresses.arbiters_addresses.clone().trivial_arbiter;
-        let demand_data = UidArbiterComposing::DemandData {
-            baseArbiter: trivial_arbiter,
-            baseDemand: Bytes::default(),
-            uid: different_uid,
-        };
-
-        // Encode the demand data
-        let encoded = ArbitersModule::encode_uid_arbiter_composing_demand(&demand_data);
-
-        // Check obligation should revert with UidMismatched
-        let uid_arbiter_address = test.addresses.arbiters_addresses.clone().uid_arbiter;
-        let uid_arbiter = contracts::extended_uid_arbiters::composing::UidArbiterComposing::new(
-            uid_arbiter_address,
-            &test.alice_client.public_provider,
-        );
-
-        let result = uid_arbiter
-            .checkObligation(attestation.clone().into(), encoded, FixedBytes::<32>::ZERO)
-            .call()
-            .await;
-
-        assert!(
-            result.is_err(),
-            "UidArbiter should revert with incorrect UID"
-        );
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_uid_arbiter_with_correct_uid() -> eyre::Result<()> {
-        // Setup test environment
-        let test = setup_test_environment().await?;
-
-        // Create a test attestation
-        let uid = FixedBytes::<32>::from_slice(&[1u8; 32]);
-        let attestation = create_test_attestation(Some(uid), None);
-
-        // Create demand data with matching UID and use trivialArbiter as the baseArbiter
-        let trivial_arbiter = test.addresses.arbiters_addresses.clone().trivial_arbiter;
-        let demand_data = UidArbiterComposing::DemandData {
-            baseArbiter: trivial_arbiter,
-            baseDemand: Bytes::default(),
-            uid,
-        };
-
-        // Encode the demand data
-        let encoded = ArbitersModule::encode_uid_arbiter_composing_demand(&demand_data);
-
-        // Check obligation - should return true
-        let uid_arbiter_address = test.addresses.arbiters_addresses.clone().uid_arbiter;
-        let uid_arbiter = contracts::extended_uid_arbiters::composing::UidArbiterComposing::new(
-            uid_arbiter_address,
-            &test.alice_client.public_provider,
-        );
-        let result = uid_arbiter
-            .checkObligation(attestation.clone().into(), encoded, FixedBytes::<32>::ZERO)
-            .call()
-            .await?;
-
-        assert!(result, "UidArbiter should return true with matching UID");
-
-        Ok(())
-    }
-
-    #[tokio::test]
     async fn test_specific_attestation_arbiter_with_incorrect_uid() -> eyre::Result<()> {
         // Setup test environment
         let test = setup_test_environment().await?;
@@ -1362,71 +802,6 @@ mod tests {
 
         // Verify the data was encoded and decoded correctly
         assert_eq!(decoded.uid, uid, "UID did not round-trip correctly");
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_encode_and_decode_uid_arbiter_composing_demand() -> eyre::Result<()> {
-        // Setup test environment
-        let test = setup_test_environment().await?;
-
-        // Create a test demand data
-        let uid = FixedBytes::<32>::from_slice(&[1u8; 32]);
-        let trivial_arbiter = test.addresses.arbiters_addresses.clone().trivial_arbiter;
-        let demand_data = UidArbiterComposing::DemandData {
-            baseArbiter: trivial_arbiter,
-            baseDemand: Bytes::default(),
-            uid,
-        };
-
-        // Encode the demand data
-        let encoded = ArbitersModule::encode_uid_arbiter_composing_demand(&demand_data);
-
-        // Decode the demand data
-        let decoded = ArbitersModule::decode_uid_arbiter_composing_demand(&encoded)?;
-
-        // Verify the data was encoded and decoded correctly
-        assert_eq!(decoded.uid, uid, "UID did not round-trip correctly");
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_encode_and_decode_recipient_arbiter_demand() -> eyre::Result<()> {
-        // Setup test environment
-        let test = setup_test_environment().await?;
-
-        // Create a test demand data
-        let base_arbiter = test.addresses.arbiters_addresses.trivial_arbiter;
-        let base_demand = Bytes::from(vec![1, 2, 3]);
-        let recipient = test.alice.address();
-
-        let demand_data = RecipientArbiterComposing::DemandData {
-            baseArbiter: base_arbiter,
-            baseDemand: base_demand.clone(),
-            recipient,
-        };
-
-        // Encode the demand data
-        let encoded = ArbitersModule::encode_recipient_arbiter_composing_demand(&demand_data);
-
-        // Decode the demand data
-        let decoded = ArbitersModule::decode_recipient_arbiter_composing_demand(&encoded)?;
-
-        // Verify the data was encoded and decoded correctly
-        assert_eq!(
-            decoded.baseArbiter, base_arbiter,
-            "Base arbiter did not round-trip correctly"
-        );
-        assert_eq!(
-            decoded.baseDemand, base_demand,
-            "Base demand did not round-trip correctly"
-        );
-        assert_eq!(
-            decoded.recipient, recipient,
-            "Recipient did not round-trip correctly"
-        );
 
         Ok(())
     }
@@ -1678,224 +1053,6 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_any_arbiter() -> eyre::Result<()> {
-        // Setup test environment
-        let test = setup_test_environment().await?;
-
-        // Get arbiter addresses
-        let addresses = test.addresses.arbiters_addresses;
-
-        // Create a test attestation
-        let uid = FixedBytes::<32>::from_slice(&[1u8; 32]);
-        let attestation = create_test_attestation(Some(uid), None);
-
-        // Create different demand data for different arbiters
-
-        // SpecificAttestationArbiter with matching UID (will return true)
-        let specific_matching = SpecificAttestationArbiter::DemandData { uid };
-        let specific_matching_encoded =
-            ArbitersModule::encode_specific_attestation_arbiter_demand(&specific_matching);
-
-        // SpecificAttestationArbiter with non-matching UID (will return false/error)
-        let non_matching_uid = FixedBytes::<32>::from_slice(&[2u8; 32]);
-        let specific_non_matching = SpecificAttestationArbiter::DemandData {
-            uid: non_matching_uid,
-        };
-        let specific_non_matching_encoded =
-            ArbitersModule::encode_specific_attestation_arbiter_demand(&specific_non_matching);
-
-        // Set up AnyArbiter with two arbiters
-        let any_arbiter =
-            contracts::AnyArbiter::new(addresses.any_arbiter, &test.alice_client.wallet_provider);
-
-        // Test case 1: One true, one false - should return true
-        let any_demand_data1 = MultiArbiter::DemandData {
-            arbiters: vec![
-                addresses.trivial_arbiter,              // Always returns true
-                addresses.specific_attestation_arbiter, // Will return false with non-matching UID
-            ],
-            demands: vec![
-                Bytes::default(),                      // Empty data for TrivialArbiter
-                specific_non_matching_encoded.clone(), // Non-matching UID for SpecificAttestationArbiter
-            ],
-        };
-
-        let any_demand1 = ArbitersModule::encode_multi_arbiter_demand(&any_demand_data1);
-        let result_any1 = any_arbiter
-            .checkObligation(
-                attestation.clone().into(),
-                any_demand1,
-                FixedBytes::<32>::default(),
-            )
-            .call()
-            .await?;
-
-        assert!(
-            result_any1,
-            "AnyArbiter should return true if any arbiter returns true"
-        );
-
-        // Test case 2: Both false - should return false
-        let any_demand_data2 = MultiArbiter::DemandData {
-            arbiters: vec![
-                addresses.specific_attestation_arbiter, // Will return false with non-matching UID
-                addresses.specific_attestation_arbiter, // Will return false with non-matching UID
-            ],
-            demands: vec![
-                specific_non_matching_encoded.clone(), // Non-matching UID
-                specific_non_matching_encoded,         // Non-matching UID
-            ],
-        };
-
-        let any_demand2 = ArbitersModule::encode_multi_arbiter_demand(&any_demand_data2);
-        let result_any2 = any_arbiter
-            .checkObligation(
-                attestation.clone().into(),
-                any_demand2,
-                FixedBytes::<32>::default(),
-            )
-            .call()
-            .await;
-
-        // Should fail since both arbiters would fail
-        assert!(
-            result_any2.is_err() || !result_any2.unwrap(),
-            "AnyArbiter should return false if all arbiters return false"
-        );
-
-        // Test case 3: All true - should return true
-        let any_demand_data3 = MultiArbiter::DemandData {
-            arbiters: vec![
-                addresses.trivial_arbiter,              // Always returns true
-                addresses.specific_attestation_arbiter, // Will return true with matching UID
-            ],
-            demands: vec![
-                Bytes::default(),          // Empty data for TrivialArbiter
-                specific_matching_encoded, // Matching UID for SpecificAttestationArbiter
-            ],
-        };
-
-        let any_demand3 = ArbitersModule::encode_multi_arbiter_demand(&any_demand_data3);
-        let result_any3 = any_arbiter
-            .checkObligation(attestation.into(), any_demand3, FixedBytes::<32>::default())
-            .call()
-            .await?;
-
-        assert!(
-            result_any3,
-            "AnyArbiter should return true if all arbiters return true"
-        );
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_all_arbiter() -> eyre::Result<()> {
-        // Setup test environment
-        let test = setup_test_environment().await?;
-
-        // Get arbiter addresses
-        let addresses = test.addresses.arbiters_addresses;
-
-        // Create a test attestation
-        let uid = FixedBytes::<32>::from_slice(&[1u8; 32]);
-        let attestation = create_test_attestation(Some(uid), None);
-
-        // Create different demand data for different arbiters
-
-        // SpecificAttestationArbiter with matching UID (will return true)
-        let specific_matching = SpecificAttestationArbiter::DemandData { uid };
-        let specific_matching_encoded =
-            ArbitersModule::encode_specific_attestation_arbiter_demand(&specific_matching);
-
-        // SpecificAttestationArbiter with non-matching UID (will return false/error)
-        let non_matching_uid = FixedBytes::<32>::from_slice(&[2u8; 32]);
-        let specific_non_matching = SpecificAttestationArbiter::DemandData {
-            uid: non_matching_uid,
-        };
-        let specific_non_matching_encoded =
-            ArbitersModule::encode_specific_attestation_arbiter_demand(&specific_non_matching);
-
-        // Set up AllArbiter
-        let all_arbiter =
-            contracts::AllArbiter::new(addresses.all_arbiter, &test.alice_client.wallet_provider);
-
-        // Test case 1: One true, one false - should return false
-        let all_demand_data1 = MultiArbiter::DemandData {
-            arbiters: vec![
-                addresses.trivial_arbiter,              // Always returns true
-                addresses.specific_attestation_arbiter, // Will return false with non-matching UID
-            ],
-            demands: vec![
-                Bytes::default(),                      // Empty data for TrivialArbiter
-                specific_non_matching_encoded.clone(), // Non-matching UID for SpecificAttestationArbiter
-            ],
-        };
-
-        let all_demand1 = ArbitersModule::encode_multi_arbiter_demand(&all_demand_data1);
-        let result_all1 = all_arbiter
-            .checkObligation(
-                attestation.clone().into(),
-                all_demand1,
-                FixedBytes::<32>::default(),
-            )
-            .call()
-            .await;
-
-        // Should fail since one arbiter would fail
-        assert!(
-            result_all1.is_err(),
-            "AllArbiter should return false if any arbiter returns false"
-        );
-
-        // Test case 2: All true - should return true
-        let all_demand_data2 = MultiArbiter::DemandData {
-            arbiters: vec![
-                addresses.trivial_arbiter,              // Always returns true
-                addresses.specific_attestation_arbiter, // Will return true with matching UID
-            ],
-            demands: vec![
-                Bytes::default(),          // Empty data for TrivialArbiter
-                specific_matching_encoded, // Matching UID for SpecificAttestationArbiter
-            ],
-        };
-
-        let all_demand2 = ArbitersModule::encode_multi_arbiter_demand(&all_demand_data2);
-        let result_all2 = all_arbiter
-            .checkObligation(
-                attestation.clone().into(),
-                all_demand2,
-                FixedBytes::<32>::default(),
-            )
-            .call()
-            .await?;
-
-        assert!(
-            result_all2,
-            "AllArbiter should return true if all arbiters return true"
-        );
-
-        // Test case 3: Empty arbiters list - should return true (vacuously true)
-        let all_demand_data3 = MultiArbiter::DemandData {
-            arbiters: vec![],
-            demands: vec![],
-        };
-
-        let all_demand3 = ArbitersModule::encode_multi_arbiter_demand(&all_demand_data3);
-        let result_all3 = all_arbiter
-            .checkObligation(attestation.into(), all_demand3, FixedBytes::<32>::default())
-            .call()
-            .await?;
-
-        assert!(
-            result_all3,
-            "AllArbiter should return true with empty arbiters list"
-        );
-
-        Ok(())
-    }
-
-    #[tokio::test]
     async fn test_encode_and_decode_intrinsics_arbiter2_demand() -> eyre::Result<()> {
         // Create a test demand data
         let schema = FixedBytes::<32>::from_slice(&[1u8; 32]);
@@ -1909,55 +1066,6 @@ mod tests {
 
         // Verify decoded data
         assert_eq!(decoded.schema, schema, "Schema should match");
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_encode_and_decode_multi_demand() -> eyre::Result<()> {
-        // Set up test environment
-        let test = setup_test_environment().await?;
-
-        // Get arbiter addresses
-        let addresses = test.addresses.arbiters_addresses;
-
-        // Create a test demand data
-        let arbiters = vec![
-            addresses.trivial_arbiter,
-            addresses.specific_attestation_arbiter,
-        ];
-        let demands = vec![Bytes::default(), Bytes::from(vec![1, 2, 3])];
-
-        let demand_data = MultiArbiter::DemandData { arbiters, demands };
-
-        // Encode the demand data
-        let encoded = ArbitersModule::encode_multi_arbiter_demand(&demand_data);
-
-        // Decode the demand data
-        let decoded = ArbitersModule::decode_multi_arbiter_demand(&encoded)?;
-
-        // Verify decoded data
-        assert_eq!(
-            decoded.arbiters.len(),
-            demand_data.arbiters.len(),
-            "Number of arbiters should match"
-        );
-        assert_eq!(
-            decoded.demands.len(),
-            demand_data.demands.len(),
-            "Number of demands should match"
-        );
-
-        for i in 0..decoded.arbiters.len() {
-            assert_eq!(
-                decoded.arbiters[i], demand_data.arbiters[i],
-                "Arbiter address should match"
-            );
-            assert_eq!(
-                decoded.demands[i], demand_data.demands[i],
-                "Demand data should match"
-            );
-        }
 
         Ok(())
     }

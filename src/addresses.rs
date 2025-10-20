@@ -59,6 +59,7 @@ pub const BASE_SEPOLIA_ADDRESSES: DefaultExtensionConfig = DefaultExtensionConfi
         revocable_confirmation_arbiter: Address::ZERO,
         revocable_confirmation_arbiter_composing: Address::ZERO,
         unrevocable_confirmation_arbiter: Address::ZERO,
+        unrevocable_confirmation_arbiter_composing: Address::ZERO,
     },
     string_obligation_addresses: StringObligationAddresses {
         eas: address!("0x4200000000000000000000000000000000000021"),
@@ -147,6 +148,7 @@ pub const FILECOIN_CALIBRATION_ADDRESSES: DefaultExtensionConfig = DefaultExtens
         revocable_confirmation_arbiter: Address::ZERO,
         revocable_confirmation_arbiter_composing: Address::ZERO,
         unrevocable_confirmation_arbiter: Address::ZERO,
+        unrevocable_confirmation_arbiter_composing: Address::ZERO,
     },
     string_obligation_addresses: StringObligationAddresses {
         eas: address!("0x3c79a0225380fb6f3cb990ffc4e3d5af4546b524"),

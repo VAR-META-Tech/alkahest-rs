@@ -367,6 +367,13 @@ pub mod confirmation_arbiters {
             "src/contracts/arbiters/UnrevocableConfirmationArbiter.json"
         );
     }
+    sol!(
+        #[allow(missing_docs)]
+        #[sol(rpc)]
+        #[derive(Debug)]
+        UnrevocableConfirmationArbiterComposing,
+        "src/contracts/arbiters/UnrevocableArbiterComposing.json"
+    );
 }
 
 pub mod payment_fulfillment_arbiters {
