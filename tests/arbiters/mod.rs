@@ -1,0 +1,18 @@
+// Arbiter integration tests module
+// This module organizes all arbiter-related tests
+
+pub mod arbiter_all;
+pub mod arbiter_any;
+pub mod arbiter_not;
+pub mod arbiter_recipient;
+pub mod arbiter_uid;
+
+// Core arbiter tests split from arbiters_main.rs
+pub mod api_tests;
+pub mod common;
+pub mod encoding_tests;
+pub mod intrinsics_arbiters;
+pub mod specific_attestation_arbiter;
+pub mod trivial_arbiter;
+pub mod trusted_oracle_arbiter;
+pub mod trusted_party_arbiter;
