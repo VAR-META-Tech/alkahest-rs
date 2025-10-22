@@ -363,11 +363,6 @@ impl OracleModule {
     ) -> eyre::Result<Vec<Decision>> {
         use itertools::izip;
 
-        let base_nonce = self
-            .wallet_provider
-            .get_transaction_count(self.signer_address)
-            .await?;
-
         let arbitration_futs = attestations
             .iter()
             .zip(decisions.iter())
@@ -377,12 +372,10 @@ impl OracleModule {
                     self.addresses.trusted_oracle_arbiter,
                     &self.wallet_provider,
                 );
-                let nonce = base_nonce + i as u64;
                 if let Some(decision) = decision {
                     Some(async move {
                         trusted_oracle_arbiter
                             .arbitrate(attestation.uid, *decision)
-                            .nonce(nonce)
                             .send()
                             .await
                     })
