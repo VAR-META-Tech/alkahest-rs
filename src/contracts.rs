@@ -372,7 +372,7 @@ pub mod confirmation_arbiters {
         #[sol(rpc)]
         #[derive(Debug)]
         UnrevocableConfirmationArbiterComposing,
-        "src/contracts/arbiters/UnrevocableArbiterComposing.json"
+        "src/contracts/arbiters/UnrevocableConfirmationArbiterComposing.json"
     );
 }
 
