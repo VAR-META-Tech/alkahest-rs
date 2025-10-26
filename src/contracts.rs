@@ -185,6 +185,31 @@ pub mod token_bundle {
     );
 }
 
+// Native Token Contracts
+sol!(
+    #[allow(missing_docs)]
+    #[sol(rpc)]
+    #[derive(Debug)]
+    NativeTokenBarterUtils,
+    "src/contracts/NativeTokenBarterUtils.json"
+);
+
+sol!(
+    #[allow(missing_docs)]
+    #[sol(rpc)]
+    #[derive(Debug)]
+    NativeTokenEscrowObligation,
+    "src/contracts/NativeTokenEscrowObligation.json"
+);
+
+sol!(
+    #[allow(missing_docs)]
+    #[sol(rpc)]
+    #[derive(Debug)]
+    NativeTokenPaymentObligation,
+    "src/contracts/NativeTokenPaymentObligation.json"
+);
+
 sol!(
     #[allow(missing_docs)]
     #[sol(rpc)]

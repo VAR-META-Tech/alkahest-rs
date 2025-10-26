@@ -116,6 +116,38 @@ impl_payment_obligation!(contracts::TokenBundlePaymentObligation::ObligationData
 impl_escrow_obligation!(contracts::token_bundle::TokenBundleEscrowObligation::ObligationData);
 impl_escrow_obligation!(contracts::TokenBundleEscrowObligation::ObligationData);
 
+// Custom implementation for NativeTokenPaymentObligation (simple amount + payee)
+impl From<(&TokenBundleData, Address)> for contracts::NativeTokenPaymentObligation::ObligationData {
+    fn from((_bundle, payee): (&TokenBundleData, Address)) -> Self {
+        // For native token payments, we only need the total ETH amount and payee
+        // This would be used when someone wants to pay for tokens with ETH
+        Self {
+            amount: U256::ZERO, // This should be set by the caller with the actual ETH amount
+            payee,
+        }
+    }
+}
+
+// Implementation for TokenBundlePaymentObligation2 for native token trades
+impl From<(&TokenBundleData, Address)>
+    for contracts::TokenBundlePaymentObligation2::ObligationData
+{
+    fn from((bundle, payee): (&TokenBundleData, Address)) -> Self {
+        let components = bundle.clone().into_bundle_components();
+        Self {
+            nativeAmount: U256::ZERO, // Will be set by caller
+            erc20Tokens: components.0,
+            erc20Amounts: components.1,
+            erc721Tokens: components.2,
+            erc721TokenIds: components.3,
+            erc1155Tokens: components.4,
+            erc1155TokenIds: components.5,
+            erc1155Amounts: components.6,
+            payee,
+        }
+    }
+}
+
 macro_rules! impl_attestation_request {
     ($target:ident) => {
         impl From<IEAS::AttestationRequestData> for $target::AttestationRequestData {
