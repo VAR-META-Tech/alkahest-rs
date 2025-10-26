@@ -20,5 +20,6 @@ impl_arbiter_api!(
     TrustedOracleArbiterApi,
     TrustedOracleArbiter::DemandData,
     encode_trusted_oracle_arbiter_demand,
-    decode_trusted_oracle_arbiter_demand
+    decode_trusted_oracle_arbiter_demand,
+    trusted_oracle_arbiter
 );

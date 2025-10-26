@@ -50,6 +50,7 @@ pub struct ArbitersAddresses {
     pub uid_arbiter: Address,
     pub recipient_arbiter: Address,
     pub not_arbiter: Address,
+    // Composing arbiters
     pub attester_arbiter_composing: Address,
     pub attester_arbiter_non_composing: Address,
     pub expiration_time_after_arbiter_composing: Address,
@@ -243,7 +244,7 @@ impl ArbitersModule {
 /// Macro to generate simple API accessors for arbiters
 #[macro_export]
 macro_rules! impl_arbiter_api {
-    ($api_name:ident, $demand_type:ty, $encode_fn:ident, $decode_fn:ident) => {
+    ($api_name:ident, $demand_type:ty, $encode_fn:ident, $decode_fn:ident, $contract_field:ident) => {
         #[derive(Clone)]
         pub struct $api_name;
 
@@ -254,6 +255,10 @@ macro_rules! impl_arbiter_api {
 
             pub fn decode(&self, data: &alloy::primitives::Bytes) -> eyre::Result<$demand_type> {
                 ArbitersModule::$decode_fn(data)
+            }
+
+            pub fn address(&self, arbiters: &ArbitersModule) -> alloy::primitives::Address {
+                arbiters.addresses.$contract_field
             }
         }
     };

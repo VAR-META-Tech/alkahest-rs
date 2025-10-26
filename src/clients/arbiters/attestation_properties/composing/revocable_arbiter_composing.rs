@@ -21,5 +21,6 @@ crate::impl_arbiter_api!(
     RevocableArbiterComposingApi,
     RevocableArbiterComposing::DemandData,
     encode_revocable_arbiter_composing_demand,
-    decode_revocable_arbiter_composing_demand
+    decode_revocable_arbiter_composing_demand,
+    revocable_arbiter_composing
 );

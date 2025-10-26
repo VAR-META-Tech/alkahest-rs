@@ -20,5 +20,6 @@ crate::impl_arbiter_api!(
     TimeEqualArbiterNonComposingApi,
     TimeEqualArbiterNonComposing::DemandData,
     encode_time_equal_arbiter_non_composing_demand,
-    decode_time_equal_arbiter_non_composing_demand
+    decode_time_equal_arbiter_non_composing_demand,
+    time_equal_arbiter_non_composing
 );

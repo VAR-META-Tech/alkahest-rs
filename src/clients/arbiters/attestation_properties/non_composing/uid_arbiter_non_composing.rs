@@ -20,5 +20,6 @@ crate::impl_arbiter_api!(
     UidArbiterNonComposingApi,
     UidArbiterNonComposing::DemandData,
     encode_uid_arbiter_non_composing_demand,
-    decode_uid_arbiter_non_composing_demand
+    decode_uid_arbiter_non_composing_demand,
+    uid_arbiter_non_composing
 );

@@ -19,5 +19,6 @@ impl_arbiter_api!(
     IntrinsicsArbiter2Api,
     IntrinsicsArbiter2::DemandData,
     encode_intrinsics_arbiter2_demand,
-    decode_intrinsics_arbiter2_demand
+    decode_intrinsics_arbiter2_demand,
+    intrinsics_arbiter_2
 );

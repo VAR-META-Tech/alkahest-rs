@@ -21,5 +21,6 @@ impl_arbiter_api!(
     TrustedPartyArbiterApi,
     TrustedPartyArbiter::DemandData,
     encode_trusted_party_arbiter_demand,
-    decode_trusted_party_arbiter_demand
+    decode_trusted_party_arbiter_demand,
+    trusted_party_arbiter
 );

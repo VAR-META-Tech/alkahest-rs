@@ -1,6 +1,5 @@
 use alkahest_rs::{
-    clients::native_token::NativeTokenModule,
-    contracts::NativeTokenPaymentObligation,
+    clients::native_token::NativeTokenModule, contracts::NativeTokenPaymentObligation,
     utils::setup_test_environment,
 };
 use alloy::{

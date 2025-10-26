@@ -20,5 +20,6 @@ crate::impl_arbiter_api!(
     UnrevocableConfirmationArbiterComposingApi,
     UnrevocableConfirmationArbiterComposing::DemandData,
     encode_unrevocable_arbiter_composing_demand,
-    decode_unrevocable_arbiter_composing_demand
+    decode_unrevocable_arbiter_composing_demand,
+    unrevocable_confirmation_arbiter_composing
 );

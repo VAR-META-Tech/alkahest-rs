@@ -21,5 +21,6 @@ crate::impl_arbiter_api!(
     NotArbiterApi,
     NotArbiter::DemandData,
     encode_not_arbiter_demand,
-    decode_not_arbiter_demand
+    decode_not_arbiter_demand,
+    not_arbiter
 );

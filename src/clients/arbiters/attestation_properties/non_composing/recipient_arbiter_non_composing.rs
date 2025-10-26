@@ -20,5 +20,6 @@ crate::impl_arbiter_api!(
     RecipientArbiterNonComposingApi,
     RecipientArbiterNonComposing::DemandData,
     encode_recipient_arbiter_non_composing_demand,
-    decode_recipient_arbiter_non_composing_demand
+    decode_recipient_arbiter_non_composing_demand,
+    recipient_arbiter_non_composing
 );

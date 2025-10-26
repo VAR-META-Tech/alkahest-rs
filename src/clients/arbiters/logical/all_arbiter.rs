@@ -21,5 +21,6 @@ crate::impl_arbiter_api!(
     AllArbiterApi,
     AllArbiter::DemandData,
     encode_all_arbiter_demand,
-    decode_all_arbiter_demand
+    decode_all_arbiter_demand,
+    all_arbiter
 );

@@ -21,5 +21,6 @@ crate::impl_arbiter_api!(
     AttesterArbiterComposingApi,
     AttesterArbiterComposing::DemandData,
     encode_attester_arbiter_composing_demand,
-    decode_attester_arbiter_composing_demand
+    decode_attester_arbiter_composing_demand,
+    attester_arbiter_composing
 );

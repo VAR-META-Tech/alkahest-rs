@@ -21,5 +21,6 @@ crate::impl_arbiter_api!(
     TimeAfterArbiterComposingApi,
     TimeAfterArbiterComposing::DemandData,
     encode_time_after_arbiter_composing_demand,
-    decode_time_after_arbiter_composing_demand
+    decode_time_after_arbiter_composing_demand,
+    time_after_arbiter_composing
 );

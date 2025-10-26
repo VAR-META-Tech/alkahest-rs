@@ -19,5 +19,6 @@ impl_arbiter_api!(
     SpecificAttestationArbiterApi,
     SpecificAttestationArbiter::DemandData,
     encode_specific_attestation_arbiter_demand,
-    decode_specific_attestation_arbiter_demand
+    decode_specific_attestation_arbiter_demand,
+    specific_attestation_arbiter
 );

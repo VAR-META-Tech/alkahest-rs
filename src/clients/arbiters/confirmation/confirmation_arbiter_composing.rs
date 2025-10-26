@@ -20,5 +20,6 @@ crate::impl_arbiter_api!(
     ConfirmationArbiterComposingApi,
     ConfirmationArbiterComposing::DemandData,
     encode_confirmation_arbiter_composing_demand,
-    decode_confirmation_arbiter_composing_demand
+    decode_confirmation_arbiter_composing_demand,
+    confirmation_arbiter_composing
 );

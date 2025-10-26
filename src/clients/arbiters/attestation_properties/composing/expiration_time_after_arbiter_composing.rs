@@ -21,5 +21,6 @@ crate::impl_arbiter_api!(
     ExpirationTimeAfterArbiterComposingApi,
     ExpirationTimeAfterArbiterComposing::DemandData,
     encode_expiration_time_after_arbiter_composing_demand,
-    decode_expiration_time_after_arbiter_composing_demand
+    decode_expiration_time_after_arbiter_composing_demand,
+    expiration_time_after_arbiter_composing
 );

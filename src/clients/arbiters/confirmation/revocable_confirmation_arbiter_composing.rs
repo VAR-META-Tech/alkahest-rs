@@ -20,5 +20,6 @@ crate::impl_arbiter_api!(
     RevocableConfirmationArbiterComposingApi,
     RevocableConfirmationArbiterComposing::DemandData,
     encode_revocable_confirmation_arbiter_composing_demand,
-    decode_revocable_confirmation_arbiter_composing_demand
+    decode_revocable_confirmation_arbiter_composing_demand,
+    revocable_confirmation_arbiter_composing
 );

@@ -20,5 +20,6 @@ crate::impl_arbiter_api!(
     SchemaArbiterNonComposingApi,
     SchemaArbiterNonComposing::DemandData,
     encode_schema_arbiter_non_composing_demand,
-    decode_schema_arbiter_non_composing_demand
+    decode_schema_arbiter_non_composing_demand,
+    schema_arbiter_non_composing
 );
