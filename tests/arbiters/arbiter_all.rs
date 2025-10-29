@@ -184,3 +184,79 @@ async fn test_encode_and_decode_all_arbiter_demand() -> eyre::Result<()> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_all_arbiter_trait_based_encoding() -> eyre::Result<()> {
+    // Set up test environment
+    let test = setup_test_environment().await?;
+
+    // Get arbiter addresses
+    let addresses = test.addresses.arbiters_addresses;
+
+    // Create a test demand data
+    let arbiters = vec![
+        addresses.trivial_arbiter,
+        addresses.specific_attestation_arbiter,
+    ];
+    let demands = vec![Bytes::default(), Bytes::from(vec![1, 2, 3])];
+
+    let demand_data = AllArbiter::DemandData { 
+        arbiters: arbiters.clone(), 
+        demands: demands.clone() 
+    };
+
+    // Test From trait: DemandData -> Bytes
+    let encoded_bytes: alloy::primitives::Bytes = demand_data.clone().into();
+
+    // Test TryFrom trait: &Bytes -> DemandData
+    let decoded_from_ref: AllArbiter::DemandData = (&encoded_bytes).try_into()?;
+
+    // Test TryFrom trait: Bytes -> DemandData
+    let decoded_from_owned: AllArbiter::DemandData = encoded_bytes.try_into()?;
+
+    // Verify both decoded versions match original
+    assert_eq!(
+        decoded_from_ref.arbiters.len(),
+        arbiters.len(),
+        "Number of arbiters should match (from ref)"
+    );
+    assert_eq!(
+        decoded_from_ref.demands.len(),
+        demands.len(),
+        "Number of demands should match (from ref)"
+    );
+
+    assert_eq!(
+        decoded_from_owned.arbiters.len(),
+        arbiters.len(),
+        "Number of arbiters should match (from owned)"
+    );
+    assert_eq!(
+        decoded_from_owned.demands.len(),
+        demands.len(),
+        "Number of demands should match (from owned)"
+    );
+
+    // Verify individual elements
+    for i in 0..arbiters.len() {
+        assert_eq!(
+            decoded_from_ref.arbiters[i], arbiters[i],
+            "Arbiter address should match (from ref)"
+        );
+        assert_eq!(
+            decoded_from_ref.demands[i], demands[i],
+            "Demand data should match (from ref)"
+        );
+
+        assert_eq!(
+            decoded_from_owned.arbiters[i], arbiters[i],
+            "Arbiter address should match (from owned)"
+        );
+        assert_eq!(
+            decoded_from_owned.demands[i], demands[i],
+            "Demand data should match (from owned)"
+        );
+    }
+
+    Ok(())
+}
