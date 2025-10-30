@@ -29,3 +29,57 @@ pub use time_after_arbiter_composing::*;
 pub use time_before_arbiter_composing::*;
 pub use time_equal_arbiter_composing::*;
 pub use uid_arbiter_composing::*;
+
+/// Convenience struct for accessing composing attestation property arbiters
+#[derive(Clone)]
+pub struct ComposingArbiters;
+
+impl ComposingArbiters {
+    pub fn attester(&self) -> AttesterArbiterComposing {
+        AttesterArbiterComposing
+    }
+
+    pub fn expiration_time_after(&self) -> ExpirationTimeAfterArbiterComposing {
+        ExpirationTimeAfterArbiterComposing
+    }
+
+    pub fn expiration_time_before(&self) -> ExpirationTimeBeforeArbiterComposing {
+        ExpirationTimeBeforeArbiterComposing
+    }
+
+    pub fn expiration_time_equal(&self) -> ExpirationTimeEqualArbiterComposing {
+        ExpirationTimeEqualArbiterComposing
+    }
+
+    pub fn recipient(&self) -> RecipientArbiterComposing {
+        RecipientArbiterComposing
+    }
+
+    pub fn ref_uid(&self) -> RefUidArbiterComposing {
+        RefUidArbiterComposing
+    }
+
+    pub fn revocable(&self) -> RevocableArbiterComposing {
+        RevocableArbiterComposing
+    }
+
+    pub fn schema(&self) -> SchemaArbiterComposing {
+        SchemaArbiterComposing
+    }
+
+    pub fn time_after(&self) -> TimeAfterArbiterComposing {
+        TimeAfterArbiterComposing
+    }
+
+    pub fn time_before(&self) -> TimeBeforeArbiterComposing {
+        TimeBeforeArbiterComposing
+    }
+
+    pub fn time_equal(&self) -> TimeEqualArbiterComposing {
+        TimeEqualArbiterComposing
+    }
+
+    pub fn uid(&self) -> UidArbiterComposing {
+        UidArbiterComposing
+    }
+}

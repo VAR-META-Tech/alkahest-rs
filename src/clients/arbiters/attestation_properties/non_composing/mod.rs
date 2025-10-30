@@ -29,3 +29,57 @@ pub use time_after_arbiter_non_composing::*;
 pub use time_before_arbiter_non_composing::*;
 pub use time_equal_arbiter_non_composing::*;
 pub use uid_arbiter_non_composing::*;
+
+/// Convenience struct for accessing non-composing attestation property arbiters
+#[derive(Clone)]
+pub struct NonComposingArbiters;
+
+impl NonComposingArbiters {
+    pub fn attester(&self) -> AttesterArbiterNonComposing {
+        AttesterArbiterNonComposing
+    }
+
+    pub fn expiration_time_after(&self) -> ExpirationTimeAfterArbiterNonComposing {
+        ExpirationTimeAfterArbiterNonComposing
+    }
+
+    pub fn expiration_time_before(&self) -> ExpirationTimeBeforeArbiterNonComposing {
+        ExpirationTimeBeforeArbiterNonComposing
+    }
+
+    pub fn expiration_time_equal(&self) -> ExpirationTimeEqualArbiterNonComposing {
+        ExpirationTimeEqualArbiterNonComposing
+    }
+
+    pub fn recipient(&self) -> RecipientArbiterNonComposing {
+        RecipientArbiterNonComposing
+    }
+
+    pub fn ref_uid(&self) -> RefUidArbiterNonComposing {
+        RefUidArbiterNonComposing
+    }
+
+    pub fn revocable(&self) -> RevocableArbiterNonComposing {
+        RevocableArbiterNonComposing
+    }
+
+    pub fn schema(&self) -> SchemaArbiterNonComposing {
+        SchemaArbiterNonComposing
+    }
+
+    pub fn time_after(&self) -> TimeAfterArbiterNonComposing {
+        TimeAfterArbiterNonComposing
+    }
+
+    pub fn time_before(&self) -> TimeBeforeArbiterNonComposing {
+        TimeBeforeArbiterNonComposing
+    }
+
+    pub fn time_equal(&self) -> TimeEqualArbiterNonComposing {
+        TimeEqualArbiterNonComposing
+    }
+
+    pub fn uid(&self) -> UidArbiterNonComposing {
+        UidArbiterNonComposing
+    }
+}

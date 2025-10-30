@@ -270,3 +270,40 @@ macro_rules! impl_arbiter_api {
         }
     };
 }
+
+impl ArbitersModule {
+    /// Access the TrustedOracleArbiter API helper
+    pub fn trusted_oracle_arbiter(&self) -> TrustedOracleArbiter {
+        TrustedOracleArbiter
+    }
+
+    /// Access the SpecificAttestationArbiter API helper  
+    pub fn specific_attestation_arbiter(&self) -> SpecificAttestationArbiter {
+        SpecificAttestationArbiter
+    }
+
+    /// Access the TrustedPartyArbiter API helper
+    pub fn trusted_party_arbiter(&self) -> TrustedPartyArbiter {
+        TrustedPartyArbiter
+    }
+
+    /// Access the IntrinsicsArbiter2 API helper
+    pub fn intrinsics_arbiter2(&self) -> IntrinsicsArbiter2 {
+        IntrinsicsArbiter2
+    }
+
+    /// Access logical arbiters group
+    pub fn logical(&self) -> LogicalArbiters {
+        LogicalArbiters
+    }
+
+    /// Access confirmation arbiters group
+    pub fn confirmation(&self) -> ConfirmationArbiters {
+        ConfirmationArbiters
+    }
+
+    /// Access attestation properties arbiters group
+    pub fn attestation_properties(&self) -> AttestationPropertyArbiters {
+        AttestationPropertyArbiters
+    }
+}
