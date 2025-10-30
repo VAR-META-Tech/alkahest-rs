@@ -1,25 +1,31 @@
-use crate::clients::arbiters::ArbitersModule;
-use crate::impl_encode_and_decode;
-use alloy::sol;
+use crate::{contracts::expiration_time_arbiters::before::non_composing::ExpirationTimeBeforeArbiter::DemandData, impl_encode_and_decode};
 
-sol! {
-    contract ExpirationTimeBeforeArbiterNonComposing {
-        struct DemandData {
-            uint64 expirationTime;
-        }
+impl From<DemandData> for alloy::primitives::Bytes {
+    fn from(demand: DemandData) -> Self {
+        use alloy::sol_types::SolValue as _;
+        demand.abi_encode().into()
     }
 }
 
+impl TryFrom<&alloy::primitives::Bytes> for DemandData {
+    type Error = eyre::Error;
+
+    fn try_from(data: &alloy::primitives::Bytes) -> Result<Self, Self::Error> {
+        use alloy::sol_types::SolValue as _;
+        Ok(Self::abi_decode(data)?)
+    }
+}
+
+impl TryFrom<alloy::primitives::Bytes> for DemandData {
+    type Error = eyre::Error;
+
+    fn try_from(data: alloy::primitives::Bytes) -> Result<Self, Self::Error> {
+        use alloy::sol_types::SolValue as _;
+        Ok(Self::abi_decode(&data)?)
+    }
+}
 impl_encode_and_decode!(
-    ExpirationTimeBeforeArbiterNonComposing,
+    DemandData,
     encode_expiration_time_before_arbiter_non_composing_demand,
     decode_expiration_time_before_arbiter_non_composing_demand
-);
-
-crate::impl_arbiter_api!(
-    ExpirationTimeBeforeArbiterNonComposingApi,
-    ExpirationTimeBeforeArbiterNonComposing::DemandData,
-    encode_expiration_time_before_arbiter_non_composing_demand,
-    decode_expiration_time_before_arbiter_non_composing_demand,
-    expiration_time_before_arbiter_non_composing
 );

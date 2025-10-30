@@ -24,10 +24,9 @@ use crate::{
             composing::AttesterArbiterComposing, non_composing::AttesterArbiterNonComposing,
         },
         confirmation_arbiters::{
-            ConfirmationArbiter, UnrevocableConfirmationArbiterComposing,
-            composing::ConfirmationArbiterComposing, revocable::RevocableConfirmationArbiter,
-            revocable_composing::RevocableConfirmationArbiterComposing,
-            unrevocable::UnrevocableConfirmationArbiter,
+            ConfirmationArbiter, ConfirmationArbiterComposing, RevocableConfirmationArbiter,
+            RevocableConfirmationArbiterComposing, UnrevocableConfirmationArbiter,
+            UnrevocableConfirmationArbiterComposing,
         },
         erc20_barter_cross_token::ERC20BarterCrossToken,
         erc721_barter_cross_token::ERC721BarterCrossToken,

@@ -1,25 +1,42 @@
-use crate::{clients::arbiters::ArbitersModule, impl_arbiter_api, impl_encode_and_decode};
-use alloy::sol;
+use crate::{
+    clients::arbiters::ArbitersModule, contracts::TrustedPartyArbiter::DemandData,
+    impl_arbiter_api, impl_encode_and_decode,
+};
 
-sol! {
-    contract TrustedPartyArbiter {
-        struct DemandData {
-            address baseArbiter;
-            bytes baseDemand;
-            address creator;
-        }
+impl From<DemandData> for alloy::primitives::Bytes {
+    fn from(demand: DemandData) -> Self {
+        use alloy::sol_types::SolValue as _;
+        demand.abi_encode().into()
+    }
+}
+
+impl TryFrom<&alloy::primitives::Bytes> for DemandData {
+    type Error = eyre::Error;
+
+    fn try_from(data: &alloy::primitives::Bytes) -> Result<Self, Self::Error> {
+        use alloy::sol_types::SolValue as _;
+        Ok(Self::abi_decode(data)?)
+    }
+}
+
+impl TryFrom<alloy::primitives::Bytes> for DemandData {
+    type Error = eyre::Error;
+
+    fn try_from(data: alloy::primitives::Bytes) -> Result<Self, Self::Error> {
+        use alloy::sol_types::SolValue as _;
+        Ok(Self::abi_decode(&data)?)
     }
 }
 
 impl_encode_and_decode!(
-    TrustedPartyArbiter,
+    DemandData,
     encode_trusted_party_arbiter_demand,
     decode_trusted_party_arbiter_demand
 );
 
 impl_arbiter_api!(
-    TrustedPartyArbiterApi,
-    TrustedPartyArbiter::DemandData,
+    TrustedPartyArbiter,
+    DemandData,
     encode_trusted_party_arbiter_demand,
     decode_trusted_party_arbiter_demand,
     trusted_party_arbiter

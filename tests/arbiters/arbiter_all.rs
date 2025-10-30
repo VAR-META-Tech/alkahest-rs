@@ -62,7 +62,7 @@ async fn test_all_arbiter() -> eyre::Result<()> {
         contracts::AllArbiter::new(addresses.all_arbiter, &test.alice_client.wallet_provider);
 
     // Test case 1: One true, one false - should return false
-    let all_demand_data1 = AllArbiter::DemandData {
+    let all_demand_data1 = contracts::AllArbiter::DemandData {
         arbiters: vec![
             addresses.trivial_arbiter,              // Always returns true
             addresses.specific_attestation_arbiter, // Will return false with non-matching UID
@@ -90,7 +90,7 @@ async fn test_all_arbiter() -> eyre::Result<()> {
     );
 
     // Test case 2: All true - should return true
-    let all_demand_data2 = AllArbiter::DemandData {
+    let all_demand_data2 = contracts::AllArbiter::DemandData {
         arbiters: vec![
             addresses.trivial_arbiter,              // Always returns true
             addresses.specific_attestation_arbiter, // Will return true with matching UID
@@ -117,7 +117,7 @@ async fn test_all_arbiter() -> eyre::Result<()> {
     );
 
     // Test case 3: Empty arbiters list - should return true (vacuously true)
-    let all_demand_data3 = AllArbiter::DemandData {
+    let all_demand_data3 = contracts::AllArbiter::DemandData {
         arbiters: vec![],
         demands: vec![],
     };
@@ -151,7 +151,7 @@ async fn test_encode_and_decode_all_arbiter_demand() -> eyre::Result<()> {
     ];
     let demands = vec![Bytes::default(), Bytes::from(vec![1, 2, 3])];
 
-    let demand_data = AllArbiter::DemandData { arbiters, demands };
+    let demand_data = contracts::AllArbiter::DemandData { arbiters, demands };
 
     // Encode the demand data
     let encoded = ArbitersModule::encode_all_arbiter_demand(&demand_data);
@@ -200,19 +200,19 @@ async fn test_all_arbiter_trait_based_encoding() -> eyre::Result<()> {
     ];
     let demands = vec![Bytes::default(), Bytes::from(vec![1, 2, 3])];
 
-    let demand_data = AllArbiter::DemandData { 
-        arbiters: arbiters.clone(), 
-        demands: demands.clone() 
+    let demand_data = contracts::AllArbiter::DemandData {
+        arbiters: arbiters.clone(),
+        demands: demands.clone(),
     };
 
     // Test From trait: DemandData -> Bytes
     let encoded_bytes: alloy::primitives::Bytes = demand_data.clone().into();
 
     // Test TryFrom trait: &Bytes -> DemandData
-    let decoded_from_ref: AllArbiter::DemandData = (&encoded_bytes).try_into()?;
+    let decoded_from_ref: contracts::AllArbiter::DemandData = (&encoded_bytes).try_into()?;
 
     // Test TryFrom trait: Bytes -> DemandData
-    let decoded_from_owned: AllArbiter::DemandData = encoded_bytes.try_into()?;
+    let decoded_from_owned: contracts::AllArbiter::DemandData = encoded_bytes.try_into()?;
 
     // Verify both decoded versions match original
     assert_eq!(

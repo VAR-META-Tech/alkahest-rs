@@ -345,53 +345,37 @@ pub mod confirmation_arbiters {
         "src/contracts/arbiters/ConfirmationArbiter.json"
     );
 
-    pub mod composing {
-        use alloy::sol;
+    sol!(
+        #[allow(missing_docs)]
+        #[sol(rpc)]
+        #[derive(Debug)]
+        ConfirmationArbiterComposing,
+        "src/contracts/arbiters/ConfirmationArbiterComposing.json"
+    );
 
-        sol!(
-            #[allow(missing_docs)]
-            #[sol(rpc)]
-            #[derive(Debug)]
-            ConfirmationArbiterComposing,
-            "src/contracts/arbiters/ConfirmationArbiterComposing.json"
-        );
-    }
+    sol!(
+        #[allow(missing_docs)]
+        #[sol(rpc)]
+        #[derive(Debug)]
+        RevocableConfirmationArbiter,
+        "src/contracts/arbiters/RevocableConfirmationArbiter.json"
+    );
 
-    pub mod revocable {
-        use alloy::sol;
+    sol!(
+        #[allow(missing_docs)]
+        #[sol(rpc)]
+        #[derive(Debug)]
+        RevocableConfirmationArbiterComposing,
+        "src/contracts/arbiters/RevocableConfirmationArbiterComposing.json"
+    );
 
-        sol!(
-            #[allow(missing_docs)]
-            #[sol(rpc)]
-            #[derive(Debug)]
-            RevocableConfirmationArbiter,
-            "src/contracts/arbiters/RevocableConfirmationArbiter.json"
-        );
-    }
-
-    pub mod revocable_composing {
-        use alloy::sol;
-
-        sol!(
-            #[allow(missing_docs)]
-            #[sol(rpc)]
-            #[derive(Debug)]
-            RevocableConfirmationArbiterComposing,
-            "src/contracts/arbiters/RevocableConfirmationArbiterComposing.json"
-        );
-    }
-
-    pub mod unrevocable {
-        use alloy::sol;
-
-        sol!(
-            #[allow(missing_docs)]
-            #[sol(rpc)]
-            #[derive(Debug)]
-            UnrevocableConfirmationArbiter,
-            "src/contracts/arbiters/UnrevocableConfirmationArbiter.json"
-        );
-    }
+    sol!(
+        #[allow(missing_docs)]
+        #[sol(rpc)]
+        #[derive(Debug)]
+        UnrevocableConfirmationArbiter,
+        "src/contracts/arbiters/UnrevocableConfirmationArbiter.json"
+    );
     sol!(
         #[allow(missing_docs)]
         #[sol(rpc)]

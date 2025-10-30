@@ -1,26 +1,33 @@
-use crate::clients::arbiters::ArbitersModule;
-use alloy::sol;
+use crate::{
+    contracts::schema_arbiters::composing::SchemaArbiter::DemandData, impl_encode_and_decode,
+};
 
-sol! {
-    contract SchemaArbiterComposing {
-        struct DemandData {
-            address baseArbiter;
-            bytes baseDemand;
-            bytes32 schema;
-        }
+impl From<DemandData> for alloy::primitives::Bytes {
+    fn from(demand: DemandData) -> Self {
+        use alloy::sol_types::SolValue as _;
+        demand.abi_encode().into()
     }
 }
 
-crate::impl_encode_and_decode!(
-    SchemaArbiterComposing,
+impl TryFrom<&alloy::primitives::Bytes> for DemandData {
+    type Error = eyre::Error;
+
+    fn try_from(data: &alloy::primitives::Bytes) -> Result<Self, Self::Error> {
+        use alloy::sol_types::SolValue as _;
+        Ok(Self::abi_decode(data)?)
+    }
+}
+
+impl TryFrom<alloy::primitives::Bytes> for DemandData {
+    type Error = eyre::Error;
+
+    fn try_from(data: alloy::primitives::Bytes) -> Result<Self, Self::Error> {
+        use alloy::sol_types::SolValue as _;
+        Ok(Self::abi_decode(&data)?)
+    }
+}
+impl_encode_and_decode!(
+    DemandData,
     encode_schema_arbiter_composing_demand,
     decode_schema_arbiter_composing_demand
-);
-
-crate::impl_arbiter_api!(
-    SchemaArbiterComposingApi,
-    SchemaArbiterComposing::DemandData,
-    encode_schema_arbiter_composing_demand,
-    decode_schema_arbiter_composing_demand,
-    schema_arbiter_composing
 );

@@ -1,26 +1,31 @@
-use crate::clients::arbiters::ArbitersModule;
-use alloy::sol;
+use crate::{contracts::AnyArbiter::DemandData, impl_encode_and_decode};
 
-sol! {
-    contract AnyArbiter {
-        struct DemandData {
-            address[] arbiters;
-            bytes[] demands;
-        }
+impl From<DemandData> for alloy::primitives::Bytes {
+    fn from(demand: DemandData) -> Self {
+        use alloy::sol_types::SolValue as _;
+        demand.abi_encode().into()
     }
 }
 
-crate::impl_encode_and_decode!(
-    AnyArbiter,
+impl TryFrom<&alloy::primitives::Bytes> for DemandData {
+    type Error = eyre::Error;
+
+    fn try_from(data: &alloy::primitives::Bytes) -> Result<Self, Self::Error> {
+        use alloy::sol_types::SolValue as _;
+        Ok(Self::abi_decode(data)?)
+    }
+}
+
+impl TryFrom<alloy::primitives::Bytes> for DemandData {
+    type Error = eyre::Error;
+
+    fn try_from(data: alloy::primitives::Bytes) -> Result<Self, Self::Error> {
+        use alloy::sol_types::SolValue as _;
+        Ok(Self::abi_decode(&data)?)
+    }
+}
+impl_encode_and_decode!(
+    DemandData,
     encode_any_arbiter_demand,
     decode_any_arbiter_demand
-);
-
-// API implementation
-crate::impl_arbiter_api!(
-    AnyArbiterApi,
-    AnyArbiter::DemandData,
-    encode_any_arbiter_demand,
-    decode_any_arbiter_demand,
-    any_arbiter
 );

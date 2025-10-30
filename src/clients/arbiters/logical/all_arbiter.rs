@@ -1,15 +1,5 @@
 use crate::clients::arbiters::ArbitersModule;
-use alloy::sol;
-
-sol!(
-    #[allow(missing_docs)]
-    #[sol(rpc)]
-    #[derive(Debug)]
-    AllArbiter,
-    "src/contracts/arbiters/AllArbiter.json"
-);
-
-use AllArbiter::DemandData;
+use crate::{contracts::AllArbiter::DemandData, impl_encode_and_decode};
 
 impl From<DemandData> for alloy::primitives::Bytes {
     fn from(demand: DemandData) -> Self {
@@ -36,17 +26,8 @@ impl TryFrom<alloy::primitives::Bytes> for DemandData {
     }
 }
 
-crate::impl_encode_and_decode!(
-    AllArbiter,
+impl_encode_and_decode!(
+    DemandData,
     encode_all_arbiter_demand,
     decode_all_arbiter_demand
-);
-
-// API implementation
-crate::impl_arbiter_api!(
-    AllArbiterApi,
-    AllArbiter::DemandData,
-    encode_all_arbiter_demand,
-    decode_all_arbiter_demand,
-    all_arbiter
 );

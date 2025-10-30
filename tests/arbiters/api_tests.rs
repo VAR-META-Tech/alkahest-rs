@@ -1,8 +1,10 @@
 use alkahest_rs::{
     clients::arbiters::{
-        TrustedOracleArbiter, attestation_properties::composing::*,
-        attestation_properties::non_composing::*, confirmation::ConfirmationArbiterComposing,
+        TrustedOracleArbiter,
+        attestation_properties::{composing::*, non_composing::*},
+        confirmation::ConfirmationArbiterComposing,
     },
+    contracts,
     extensions::HasArbiters,
     utils::setup_test_environment,
 };
@@ -24,7 +26,7 @@ async fn test_comprehensive_arbiter_api() -> eyre::Result<()> {
     assert_eq!(decoded_oracle.oracle, oracle_demand.oracle);
 
     // Test logical arbiters - arbiters.logical().all().encode()
-    let all_demand = alkahest_rs::clients::arbiters::logical::all_arbiter::AllArbiter::DemandData {
+    let all_demand = contracts::AllArbiter::DemandData {
         arbiters: vec![test.addresses.arbiters_addresses.trivial_arbiter],
         demands: vec![Bytes::from(b"test".as_slice())],
     };
@@ -310,7 +312,7 @@ async fn test_simple_arbiter_api() -> eyre::Result<()> {
     assert_eq!(decoded.oracle, oracle_demand.oracle, "Oracle should match");
 
     // Test logical.all API
-    let all_demand = alkahest_rs::clients::arbiters::logical::all_arbiter::AllArbiter::DemandData {
+    let all_demand = contracts::AllArbiter::DemandData {
         arbiters: vec![test.addresses.arbiters_addresses.trivial_arbiter],
         demands: vec![Bytes::from(b"test".as_slice())],
     };

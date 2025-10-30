@@ -1,24 +1,26 @@
-use crate::{clients::arbiters::ArbitersModule, impl_arbiter_api, impl_encode_and_decode};
-use alloy::sol;
+use crate::contracts::IntrinsicsArbiter2::DemandData;
 
-sol! {
-    contract IntrinsicsArbiter2 {
-        struct DemandData {
-            bytes32 schema;
-        }
+impl From<DemandData> for alloy::primitives::Bytes {
+    fn from(demand: DemandData) -> Self {
+        use alloy::sol_types::SolValue as _;
+        demand.abi_encode().into()
     }
 }
 
-impl_encode_and_decode!(
-    IntrinsicsArbiter2,
-    encode_intrinsics_arbiter2_demand,
-    decode_intrinsics_arbiter2_demand
-);
+impl TryFrom<&alloy::primitives::Bytes> for DemandData {
+    type Error = eyre::Error;
 
-impl_arbiter_api!(
-    IntrinsicsArbiter2Api,
-    IntrinsicsArbiter2::DemandData,
-    encode_intrinsics_arbiter2_demand,
-    decode_intrinsics_arbiter2_demand,
-    intrinsics_arbiter_2
-);
+    fn try_from(data: &alloy::primitives::Bytes) -> Result<Self, Self::Error> {
+        use alloy::sol_types::SolValue as _;
+        Ok(Self::abi_decode(data)?)
+    }
+}
+
+impl TryFrom<alloy::primitives::Bytes> for DemandData {
+    type Error = eyre::Error;
+
+    fn try_from(data: alloy::primitives::Bytes) -> Result<Self, Self::Error> {
+        use alloy::sol_types::SolValue as _;
+        Ok(Self::abi_decode(&data)?)
+    }
+}

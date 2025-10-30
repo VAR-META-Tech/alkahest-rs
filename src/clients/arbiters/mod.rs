@@ -154,18 +154,16 @@ impl AlkahestExtension for ArbitersModule {
 
 #[macro_export]
 macro_rules! impl_encode_and_decode {
-    ($contract:ident, $encode_fn:ident, $decode_fn:ident) => {
+    ($demand_data_type:ty, $encode_fn:ident, $decode_fn:ident) => {
         impl $crate::clients::arbiters::ArbitersModule {
-            pub fn $encode_fn(demand: &$contract::DemandData) -> alloy::primitives::Bytes {
+            pub fn $encode_fn(demand: &$demand_data_type) -> alloy::primitives::Bytes {
                 use alloy::sol_types::SolValue as _;
                 demand.abi_encode().into()
             }
 
-            pub fn $decode_fn(
-                data: &alloy::primitives::Bytes,
-            ) -> eyre::Result<$contract::DemandData> {
+            pub fn $decode_fn(data: &alloy::primitives::Bytes) -> eyre::Result<$demand_data_type> {
                 use alloy::sol_types::SolValue as _;
-                Ok($contract::DemandData::abi_decode(data)?)
+                Ok(<$demand_data_type>::abi_decode(data)?)
             }
         }
     };
@@ -271,41 +269,4 @@ macro_rules! impl_arbiter_api {
             }
         }
     };
-}
-
-impl ArbitersModule {
-    /// Access the TrustedOracleArbiter API helper
-    pub fn trusted_oracle_arbiter(&self) -> TrustedOracleArbiterApi {
-        TrustedOracleArbiterApi
-    }
-
-    /// Access the SpecificAttestationArbiter API helper  
-    pub fn specific_attestation_arbiter(&self) -> SpecificAttestationArbiterApi {
-        SpecificAttestationArbiterApi
-    }
-
-    /// Access the TrustedPartyArbiter API helper
-    pub fn trusted_party_arbiter(&self) -> TrustedPartyArbiterApi {
-        TrustedPartyArbiterApi
-    }
-
-    /// Access the IntrinsicsArbiter2 API helper
-    pub fn intrinsics_arbiter2(&self) -> IntrinsicsArbiter2Api {
-        IntrinsicsArbiter2Api
-    }
-
-    /// Access logical arbiters group
-    pub fn logical(&self) -> LogicalArbitersApi {
-        LogicalArbitersApi
-    }
-
-    /// Access confirmation arbiters group
-    pub fn confirmation(&self) -> ConfirmationArbitersApi {
-        ConfirmationArbitersApi
-    }
-
-    /// Access attestation properties arbiters group
-    pub fn attestation_properties(&self) -> AttestationPropertiesApi {
-        AttestationPropertiesApi
-    }
 }

@@ -11,19 +11,3 @@ pub mod unrevocable_confirmation_arbiter_composing;
 pub use confirmation_arbiter_composing::*;
 pub use revocable_confirmation_arbiter_composing::*;
 pub use unrevocable_confirmation_arbiter_composing::*;
-
-// Confirmation arbiters group
-#[derive(Clone)]
-pub struct ConfirmationArbitersApi;
-
-impl ConfirmationArbitersApi {
-    pub fn confirmation_composing(&self) -> ConfirmationArbiterComposingApi {
-        ConfirmationArbiterComposingApi
-    }
-    pub fn revocable_confirmation_composing(&self) -> RevocableConfirmationArbiterComposingApi {
-        RevocableConfirmationArbiterComposingApi
-    }
-    pub fn unrevocable_confirmation_composing(&self) -> UnrevocableConfirmationArbiterComposingApi {
-        UnrevocableConfirmationArbiterComposingApi
-    }
-}
