@@ -1,10 +1,4 @@
-use alkahest_rs::{
-    clients::arbiters::{
-        ArbitersModule, attestation_properties::composing::RecipientArbiterComposing,
-    },
-    contracts,
-    utils::setup_test_environment,
-};
+use alkahest_rs::{ contracts, utils::setup_test_environment};
 use alloy::primitives::{Address, Bytes, FixedBytes};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -48,7 +42,7 @@ async fn test_recipient_arbiter_with_incorrect_recipient() -> eyre::Result<()> {
     };
 
     // Encode demand data
-    let demand = ArbitersModule::encode_recipient_arbiter_composing_demand(&demand_data);
+    let demand = demand_data.into();
     let counteroffer = FixedBytes::<32>::default();
 
     // Create RecipientArbiter contract instance
@@ -89,7 +83,7 @@ async fn test_recipient_arbiter_with_correct_recipient() -> eyre::Result<()> {
     };
 
     // Encode demand data
-    let demand = ArbitersModule::encode_recipient_arbiter_composing_demand(&demand_data);
+    let demand = demand_data.into();
     let counteroffer = FixedBytes::<32>::default();
 
     // Check obligation should return true
@@ -129,10 +123,11 @@ async fn test_encode_and_decode_recipient_arbiter_demand() -> eyre::Result<()> {
     };
 
     // Encode the demand data
-    let encoded = ArbitersModule::encode_recipient_arbiter_composing_demand(&demand_data);
+    let encoded: Bytes = demand_data.clone().into();
 
     // Decode the demand data
-    let decoded = ArbitersModule::decode_recipient_arbiter_composing_demand(&encoded)?;
+    let decoded: contracts::attestation_properties::composing::RecipientArbiter::DemandData =
+        (&encoded).try_into()?;
 
     // Verify the data was encoded and decoded correctly
     assert_eq!(

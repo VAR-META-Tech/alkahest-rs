@@ -6,15 +6,3 @@ use crate::{
 
 impl_demand_data_conversions!(DemandData);
 
-impl_encode_and_decode!(
-    DemandData,
-    encode_confirmation_arbiter_composing_demand,
-    decode_confirmation_arbiter_composing_demand
-);
-impl_arbiter_api!(
-    ConfirmationArbiterComposing,
-    DemandData,
-    encode_confirmation_arbiter_composing_demand,
-    decode_confirmation_arbiter_composing_demand,
-    confirmation_arbiter_composing
-);

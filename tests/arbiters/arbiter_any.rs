@@ -1,10 +1,4 @@
-use alkahest_rs::{
-    clients::arbiters::{
-        ArbitersModule, SpecificAttestationArbiter, logical::any_arbiter::AnyArbiter,
-    },
-    contracts,
-    utils::setup_test_environment,
-};
+use alkahest_rs::{ contracts, utils::setup_test_environment};
 use alloy::primitives::{Address, Bytes, FixedBytes};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -46,20 +40,20 @@ async fn test_any_arbiter() -> eyre::Result<()> {
 
     // SpecificAttestationArbiter with matching UID (will return true)
     let specific_matching = contracts::SpecificAttestationArbiter::DemandData { uid };
-    let specific_matching_encoded =
-        ArbitersModule::encode_specific_attestation_arbiter_demand(&specific_matching);
+    let specific_matching_encoded = specific_matching.into();
 
     // SpecificAttestationArbiter with non-matching UID (will return false/error)
     let non_matching_uid = FixedBytes::<32>::from_slice(&[2u8; 32]);
     let specific_non_matching = contracts::SpecificAttestationArbiter::DemandData {
         uid: non_matching_uid,
     };
-    let specific_non_matching_encoded =
-        ArbitersModule::encode_specific_attestation_arbiter_demand(&specific_non_matching);
+    let specific_non_matching_encoded: Bytes = specific_non_matching.into();
 
     // Set up AnyArbiter with two arbiters
-    let any_arbiter =
-        contracts::logical::AnyArbiter::new(addresses.any_arbiter, &test.alice_client.wallet_provider);
+    let any_arbiter = contracts::logical::AnyArbiter::new(
+        addresses.any_arbiter,
+        &test.alice_client.wallet_provider,
+    );
 
     // Test case 1: One true, one false - should return true
     let any_demand_data1 = contracts::logical::AnyArbiter::DemandData {
@@ -73,7 +67,7 @@ async fn test_any_arbiter() -> eyre::Result<()> {
         ],
     };
 
-    let any_demand1 = ArbitersModule::encode_any_arbiter_demand(&any_demand_data1);
+    let any_demand1 = any_demand_data1.into();
     let result_any1 = any_arbiter
         .checkObligation(
             attestation.clone().into(),
@@ -100,7 +94,7 @@ async fn test_any_arbiter() -> eyre::Result<()> {
         ],
     };
 
-    let any_demand2 = ArbitersModule::encode_any_arbiter_demand(&any_demand_data2);
+    let any_demand2 = any_demand_data2.into();
     let result_any2 = any_arbiter
         .checkObligation(
             attestation.clone().into(),
@@ -128,7 +122,7 @@ async fn test_any_arbiter() -> eyre::Result<()> {
         ],
     };
 
-    let any_demand3 = ArbitersModule::encode_any_arbiter_demand(&any_demand_data3);
+    let any_demand3 = any_demand_data3.into();
     let result_any3 = any_arbiter
         .checkObligation(attestation.into(), any_demand3, FixedBytes::<32>::default())
         .call()
@@ -160,10 +154,10 @@ async fn test_encode_and_decode_any_arbiter_demand() -> eyre::Result<()> {
     let demand_data = contracts::logical::AnyArbiter::DemandData { arbiters, demands };
 
     // Encode the demand data
-    let encoded = ArbitersModule::encode_any_arbiter_demand(&demand_data);
+    let encoded: Bytes = demand_data.clone().into();
 
     // Decode the demand data
-    let decoded = ArbitersModule::decode_any_arbiter_demand(&encoded)?;
+    let decoded: contracts::logical::AnyArbiter::DemandData = (&encoded).try_into()?;
 
     // Verify decoded data
     assert_eq!(
@@ -215,10 +209,12 @@ async fn test_any_arbiter_trait_based_encoding() -> eyre::Result<()> {
     let encoded_bytes: alloy::primitives::Bytes = demand_data.clone().into();
 
     // Test TryFrom trait: &Bytes -> DemandData
-    let decoded_from_ref: contracts::logical::AnyArbiter::DemandData = (&encoded_bytes).try_into()?;
+    let decoded_from_ref: contracts::logical::AnyArbiter::DemandData =
+        (&encoded_bytes).try_into()?;
 
     // Test TryFrom trait: Bytes -> DemandData
-    let decoded_from_owned: contracts::logical::AnyArbiter::DemandData = encoded_bytes.try_into()?;
+    let decoded_from_owned: contracts::logical::AnyArbiter::DemandData =
+        encoded_bytes.try_into()?;
 
     // Verify both decoded versions match original
     assert_eq!(

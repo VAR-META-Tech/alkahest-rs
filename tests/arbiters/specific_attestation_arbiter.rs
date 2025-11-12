@@ -1,9 +1,5 @@
 use crate::arbiters::common::create_test_attestation;
-use alkahest_rs::{
-    clients::arbiters::{ArbitersModule, SpecificAttestationArbiter},
-    contracts,
-    utils::setup_test_environment,
-};
+use alkahest_rs::{contracts, utils::setup_test_environment};
 use alloy::primitives::FixedBytes;
 
 #[tokio::test]
@@ -20,7 +16,7 @@ async fn test_specific_attestation_arbiter_with_incorrect_uid_original() -> eyre
     let demand_data = contracts::SpecificAttestationArbiter::DemandData { uid: different_uid };
 
     // Encode the demand data
-    let encoded = ArbitersModule::encode_specific_attestation_arbiter_demand(&demand_data);
+    let encoded = demand_data.into();
 
     // Check obligation should revert with NotDemandedAttestation
     let specific_attestation_arbiter = contracts::SpecificAttestationArbiter::new(
@@ -57,7 +53,7 @@ async fn test_specific_attestation_arbiter_with_incorrect_uid() -> eyre::Result<
     let demand_data = contracts::SpecificAttestationArbiter::DemandData { uid: different_uid };
 
     // Encode demand data
-    let demand = ArbitersModule::encode_specific_attestation_arbiter_demand(&demand_data);
+    let demand = demand_data.into();
     let counteroffer = FixedBytes::<32>::default();
 
     // Check obligation should revert with NotDemandedAttestation

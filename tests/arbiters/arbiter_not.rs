@@ -1,8 +1,4 @@
-use alkahest_rs::{
-    clients::arbiters::{ArbitersModule, logical::not_arbiter::NotArbiter},
-    contracts,
-    utils::setup_test_environment,
-};
+use alkahest_rs::{contracts, utils::setup_test_environment};
 use alloy::primitives::{Address, Bytes, FixedBytes};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -43,10 +39,10 @@ async fn test_encode_and_decode_not_arbiter_demand() -> eyre::Result<()> {
     };
 
     // Encode the demand data
-    let encoded = ArbitersModule::encode_not_arbiter_demand(&demand_data);
+    let encoded: Bytes = demand_data.clone().into();
 
     // Decode the demand data
-    let decoded = ArbitersModule::decode_not_arbiter_demand(&encoded)?;
+    let decoded: contracts::logical::NotArbiter::DemandData = (&encoded).try_into()?;
 
     // Verify decoded data
     assert_eq!(

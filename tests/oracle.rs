@@ -16,7 +16,6 @@ mod tests {
     };
 
     use {
-        alkahest_rs::clients::arbiters::{ArbitersModule, TrustedOracleArbiter},
         alkahest_rs::utils::setup_test_environment,
     };
 
@@ -43,7 +42,7 @@ mod tests {
             data: bytes!(""),
         };
 
-        let demand = ArbitersModule::encode_trusted_oracle_arbiter_demand(&demand_data);
+        let demand = demand_data.into();
         let item = ArbiterData { arbiter, demand };
         let expiration = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() + 3600;
 

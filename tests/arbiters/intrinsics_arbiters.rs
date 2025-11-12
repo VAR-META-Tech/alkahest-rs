@@ -1,9 +1,5 @@
 use crate::arbiters::common::create_test_attestation;
-use alkahest_rs::{
-    clients::arbiters::{ArbitersModule, IntrinsicsArbiter2},
-    contracts,
-    utils::setup_test_environment,
-};
+use alkahest_rs::{contracts, utils::setup_test_environment};
 use alloy::primitives::{Address, Bytes, FixedBytes};
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -133,13 +129,11 @@ async fn test_intrinsics_arbiter_2() -> eyre::Result<()> {
 
     // Create demand with matching schema
     let matching_demand = contracts::IntrinsicsArbiter2::DemandData { schema: schema1 };
-    let encoded_matching_demand =
-        ArbitersModule::encode_intrinsics_arbiter2_demand(&matching_demand);
+    let encoded_matching_demand = matching_demand.into();
 
     // Create demand with non-matching schema
     let non_matching_demand = contracts::IntrinsicsArbiter2::DemandData { schema: schema2 };
-    let encoded_non_matching_demand =
-        ArbitersModule::encode_intrinsics_arbiter2_demand(&non_matching_demand);
+    let encoded_non_matching_demand = non_matching_demand.into();
 
     // Test with matching schema - should pass
     let result_matching = intrinsics_arbiter2

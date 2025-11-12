@@ -1,6 +1,6 @@
 use crate::arbiters::common::create_test_attestation;
 use alkahest_rs::{
-    clients::arbiters::{ArbitersModule, TrustedPartyArbiter},
+    clients::arbiters::{ArbitersModule},
     contracts,
     utils::setup_test_environment,
 };
@@ -22,7 +22,7 @@ async fn test_trusted_party_arbiter_with_incorrect_creator_original() -> eyre::R
     };
 
     // Encode demand data
-    let demand = ArbitersModule::encode_trusted_party_arbiter_demand(&demand_data);
+    let demand = demand_data.into();
     let counteroffer = FixedBytes::<32>::default();
 
     // Check obligation should revert with NotTrustedParty
@@ -66,7 +66,7 @@ async fn test_trusted_party_arbiter_with_incorrect_creator() -> eyre::Result<()>
     };
 
     // Encode the demand data
-    let demand = ArbitersModule::encode_trusted_party_arbiter_demand(&demand_data);
+    let demand = demand_data.into();
     let counteroffer = FixedBytes::<32>::default();
 
     // Check obligation should revert with NotTrustedParty

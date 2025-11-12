@@ -8,9 +8,7 @@ pub mod arbiter_recipient;
 pub mod arbiter_uid;
 
 // Core arbiter tests split from arbiters_main.rs
-pub mod api_tests;
 pub mod common;
-pub mod encoding_tests;
 pub mod intrinsics_arbiters;
 pub mod specific_attestation_arbiter;
 pub mod trivial_arbiter;

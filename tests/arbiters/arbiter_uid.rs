@@ -1,5 +1,4 @@
 use alkahest_rs::{
-    clients::arbiters::{ArbitersModule, attestation_properties::composing::UidArbiterComposing},
     contracts,
     utils::setup_test_environment,
 };
@@ -47,7 +46,7 @@ async fn test_uid_arbiter_with_incorrect_uid() -> eyre::Result<()> {
     };
 
     // Encode the demand data
-    let encoded = ArbitersModule::encode_uid_arbiter_composing_demand(&demand_data);
+    let encoded: Bytes = demand_data.clone().into();
 
     // Check obligation should revert with UidMismatched
     let uid_arbiter_address = test.addresses.arbiters_addresses.clone().uid_arbiter;
@@ -87,7 +86,7 @@ async fn test_uid_arbiter_with_correct_uid() -> eyre::Result<()> {
     };
 
     // Encode the demand data
-    let encoded = ArbitersModule::encode_uid_arbiter_composing_demand(&demand_data);
+    let encoded: Bytes = demand_data.clone().into();
 
     // Check obligation - should return true
     let uid_arbiter_address = test.addresses.arbiters_addresses.clone().uid_arbiter;
@@ -120,10 +119,10 @@ async fn test_encode_and_decode_uid_arbiter_composing_demand() -> eyre::Result<(
     };
 
     // Encode the demand data
-    let encoded = ArbitersModule::encode_uid_arbiter_composing_demand(&demand_data);
+    let encoded: Bytes = demand_data.clone().into();
 
     // Decode the demand data
-    let decoded = ArbitersModule::decode_uid_arbiter_composing_demand(&encoded)?;
+    let decoded: contracts::attestation_properties::composing::UidArbiter::DemandData = (&encoded).try_into()?;
 
     // Verify the data was encoded and decoded correctly
     assert_eq!(decoded.uid, uid, "UID did not round-trip correctly");

@@ -5,15 +5,3 @@ use crate::{clients::arbiters::ArbitersModule,
 
 impl_demand_data_conversions!(DemandData);
 
-impl_encode_and_decode!(
-    DemandData,
-    encode_revocable_arbiter_non_composing_demand,
-    decode_revocable_arbiter_non_composing_demand
-);
-impl_arbiter_api!(
-    RevocableArbiterNonComposing,
-    DemandData,
-    encode_revocable_arbiter_non_composing_demand,
-    decode_revocable_arbiter_non_composing_demand,
-    revocable_arbiter_non_composing
-);

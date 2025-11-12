@@ -1,12 +1,7 @@
 use crate::arbiters::common::create_test_attestation;
-use alkahest_rs::{
-    clients::arbiters::{ArbitersModule, TrustedOracleArbiter},
-    contracts,
-    extensions::HasArbiters,
-    utils::setup_test_environment,
-};
+use alkahest_rs::{contracts, extensions::HasArbiters, utils::setup_test_environment};
 use alloy::{
-    primitives::{Address, FixedBytes, bytes},
+    primitives::{Address, Bytes, FixedBytes, bytes},
     providers::Provider as _,
 };
 
@@ -27,7 +22,7 @@ async fn test_trusted_oracle_arbiter_constructor() -> eyre::Result<()> {
     };
 
     // Encode demand data
-    let demand = ArbitersModule::encode_trusted_oracle_arbiter_demand(&demand_data);
+    let demand: alloy::primitives::Bytes = demand_data.into();
     let counteroffer = FixedBytes::<32>::default();
 
     // Check obligation - should be false initially since no decision has been made
@@ -63,11 +58,11 @@ async fn test_trusted_oracle_arbiter_arbitrate() -> eyre::Result<()> {
     // Create demand data with oracle as bob
     let demand_data = contracts::TrustedOracleArbiter::DemandData {
         oracle: test.bob.address(),
-        data: bytes!(""),
+        data: Bytes::default(),
     };
 
     // Encode demand data
-    let demand = ArbitersModule::encode_trusted_oracle_arbiter_demand(&demand_data);
+    let demand: Bytes = demand_data.into();
     let counteroffer = FixedBytes::<32>::default();
 
     // Check contract interface
@@ -164,9 +159,9 @@ async fn test_trusted_oracle_arbiter_with_different_oracles() -> eyre::Result<()
     // Check with oracle1 (Bob) - should be true
     let demand_data1 = contracts::TrustedOracleArbiter::DemandData {
         oracle: oracle1,
-        data: bytes!(""),
+        data: Bytes::default(),
     };
-    let demand1 = ArbitersModule::encode_trusted_oracle_arbiter_demand(&demand_data1);
+    let demand1 = demand_data1.into();
     let counteroffer = FixedBytes::<32>::default();
 
     let result1 = trusted_oracle_arbiter
@@ -181,7 +176,7 @@ async fn test_trusted_oracle_arbiter_with_different_oracles() -> eyre::Result<()
         oracle: oracle2,
         data: bytes!(""),
     };
-    let demand2 = ArbitersModule::encode_trusted_oracle_arbiter_demand(&demand_data2);
+    let demand2 = demand_data2.into();
 
     let result2 = trusted_oracle_arbiter
         .checkObligation(attestation.into(), demand2, counteroffer)
@@ -212,7 +207,7 @@ async fn test_trusted_oracle_arbiter_with_no_decision() -> eyre::Result<()> {
     };
 
     // Encode demand data
-    let demand = ArbitersModule::encode_trusted_oracle_arbiter_demand(&demand_data);
+    let demand = demand_data.into();
     let counteroffer = FixedBytes::<32>::default();
 
     // Check with the new oracle - should be false (default value)
