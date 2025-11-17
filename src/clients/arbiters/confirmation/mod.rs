@@ -6,3 +6,8 @@
 pub mod confirmation_arbiter_composing;
 pub mod revocable_confirmation_arbiter_composing;
 pub mod unrevocable_confirmation_arbiter_composing;
+
+// Re-export key types for easier access
+pub use confirmation_arbiter_composing::DecodedConfirmationArbiterComposingDemandData;
+pub use revocable_confirmation_arbiter_composing::DecodedRevocableConfirmationArbiterComposingDemandData;
+pub use unrevocable_confirmation_arbiter_composing::DecodedUnrevocableConfirmationArbiterComposingDemandData;

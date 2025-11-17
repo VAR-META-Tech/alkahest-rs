@@ -1,6 +1,38 @@
-use crate::{clients::arbiters::ArbitersModule, 
-    contracts::attestation_properties::composing::AttesterArbiter::DemandData, impl_encode_and_decode, impl_demand_data_conversions, impl_arbiter_api
+use crate::clients::arbiters::DecodedDemand;
+use crate::{
+    clients::arbiters::ArbitersModule,
+    contracts::attestation_properties::composing::AttesterArbiter::DemandData, impl_arbiter_api,
+    impl_demand_data_conversions, impl_encode_and_decode,
 };
+use alloy::primitives::Address;
 
 impl_demand_data_conversions!(DemandData);
 
+/// Decoded version of AttesterArbiter::DemandData with actual demand structure instead of raw bytes
+#[derive(Debug, Clone)]
+pub struct DecodedAttesterArbiterComposingDemandData {
+    /// Same base arbiter address as original
+    pub base_arbiter: Address,
+    /// Decoded base demand instead of raw bytes
+    pub base_demand: DecodedDemand,
+    /// Same attester address as original
+    pub attester: Address,
+}
+
+impl ArbitersModule {
+    pub fn decode_attester_arbiter_composing_demands(
+        &self,
+        demand_data: DemandData,
+    ) -> eyre::Result<DecodedAttesterArbiterComposingDemandData> {
+        let base_arbiter = demand_data.baseArbiter;
+        let attester = demand_data.attester;
+        let decoded_base_demand =
+            self.decode_arbiter_demand(demand_data.baseArbiter, &demand_data.baseDemand)?;
+
+        Ok(DecodedAttesterArbiterComposingDemandData {
+            base_arbiter,
+            base_demand: decoded_base_demand,
+            attester,
+        })
+    }
+}
