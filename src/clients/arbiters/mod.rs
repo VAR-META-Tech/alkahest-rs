@@ -168,23 +168,6 @@ impl AlkahestExtension for ArbitersModule {
     }
 }
 
-#[macro_export]
-macro_rules! impl_encode_and_decode {
-    ($demand_data_type:ty, $encode_fn:ident, $decode_fn:ident) => {
-        impl $crate::clients::arbiters::ArbitersModule {
-            pub fn $encode_fn(demand: &$demand_data_type) -> alloy::primitives::Bytes {
-                use alloy::sol_types::SolValue as _;
-                demand.abi_encode().into()
-            }
-
-            pub fn $decode_fn(data: &alloy::primitives::Bytes) -> eyre::Result<$demand_data_type> {
-                use alloy::sol_types::SolValue as _;
-                Ok(<$demand_data_type>::abi_decode(data)?)
-            }
-        }
-    };
-}
-
 impl ArbitersModule {
     pub fn new(
         public_provider: PublicProvider,
@@ -281,29 +264,6 @@ macro_rules! impl_demand_data_conversions {
             fn try_from(data: alloy::primitives::Bytes) -> Result<Self, Self::Error> {
                 use alloy::sol_types::SolValue as _;
                 Ok(Self::abi_decode(&data)?)
-            }
-        }
-    };
-}
-
-/// Macro to generate simple API accessors for arbiters
-#[macro_export]
-macro_rules! impl_arbiter_api {
-    ($api_name:ident, $demand_type:ty, $encode_fn:ident, $decode_fn:ident, $contract_field:ident) => {
-        #[derive(Clone)]
-        pub struct $api_name;
-
-        impl $api_name {
-            pub fn encode(&self, demand: &$demand_type) -> alloy::primitives::Bytes {
-                ArbitersModule::$encode_fn(demand)
-            }
-
-            pub fn decode(&self, data: &alloy::primitives::Bytes) -> eyre::Result<$demand_type> {
-                ArbitersModule::$decode_fn(data)
-            }
-
-            pub fn address(&self, arbiters: &ArbitersModule) -> alloy::primitives::Address {
-                arbiters.addresses.$contract_field
             }
         }
     };

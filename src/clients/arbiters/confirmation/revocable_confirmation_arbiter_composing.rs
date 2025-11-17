@@ -2,7 +2,7 @@ use crate::clients::arbiters::DecodedDemand;
 use crate::{
     clients::arbiters::ArbitersModule,
     contracts::confirmation_arbiters::RevocableConfirmationArbiterComposing::DemandData,
-    impl_arbiter_api, impl_demand_data_conversions, impl_encode_and_decode,
+    impl_demand_data_conversions,
 };
 use alloy::primitives::Address;
 

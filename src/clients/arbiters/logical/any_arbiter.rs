@@ -1,8 +1,9 @@
 use alloy::primitives::Address;
 
 use crate::{
-    clients::arbiters::{ArbitersModule, DecodedDemand}, contracts::logical::AnyArbiter::DemandData,
-    impl_arbiter_api, impl_demand_data_conversions, impl_encode_and_decode,
+    clients::arbiters::{ArbitersModule, DecodedDemand},
+    contracts::logical::AnyArbiter::DemandData,
+    impl_demand_data_conversions,
 };
 
 impl_demand_data_conversions!(DemandData);
