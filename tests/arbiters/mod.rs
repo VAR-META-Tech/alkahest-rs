@@ -13,6 +13,7 @@ pub mod common;
 pub mod confirmation_arbiters;
 pub mod intrinsics_arbiters;
 pub mod specific_attestation_arbiter;
+pub mod tree_arbiter_decode;
 pub mod trivial_arbiter;
 pub mod trusted_oracle_arbiter;
 pub mod trusted_party_arbiter;
