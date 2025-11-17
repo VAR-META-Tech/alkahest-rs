@@ -13,7 +13,7 @@ pub struct DecodedNotArbiterDemandData {
     /// Same base arbiter address as original
     pub base_arbiter: Address,
     /// Decoded base demand instead of raw bytes
-    pub base_demand: DecodedDemand,
+    pub base_demand: Box<DecodedDemand>,
 }
 
 impl ArbitersModule {
@@ -27,7 +27,7 @@ impl ArbitersModule {
 
         Ok(DecodedNotArbiterDemandData {
             base_arbiter,
-            base_demand: decoded_base_demand,
+            base_demand: Box::new(decoded_base_demand),
         })
     }
 }

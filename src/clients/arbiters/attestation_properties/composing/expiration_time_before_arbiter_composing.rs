@@ -14,7 +14,7 @@ pub struct DecodedExpirationTimeBeforeArbiterComposingDemandData {
     /// Same base arbiter address as original
     pub base_arbiter: Address,
     /// Decoded base demand instead of raw bytes
-    pub base_demand: DecodedDemand,
+    pub base_demand: Box<DecodedDemand>,
     /// Same expirationTime uint64 as original
     pub expiration_time: u64,
 }
@@ -31,7 +31,7 @@ impl ArbitersModule {
 
         Ok(DecodedExpirationTimeBeforeArbiterComposingDemandData {
             base_arbiter,
-            base_demand: decoded_base_demand,
+            base_demand: Box::new(decoded_base_demand),
             expiration_time,
         })
     }

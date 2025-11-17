@@ -32,7 +32,7 @@ async fn test_attester_arbiter_composing_decode() -> eyre::Result<()> {
 
     assert_eq!(decoded.base_arbiter, base_arbiter);
     assert_eq!(decoded.attester, attester);
-    match decoded.base_demand {
+    match decoded.base_demand.as_ref() {
         DecodedDemand::TrivialArbiter => {}
         _ => panic!("Expected TrivialArbiter"),
     }
@@ -63,7 +63,7 @@ async fn test_recipient_arbiter_composing_decode() -> eyre::Result<()> {
 
     assert_eq!(decoded.base_arbiter, base_arbiter);
     assert_eq!(decoded.recipient, recipient);
-    match decoded.base_demand {
+    match decoded.base_demand.as_ref() {
         DecodedDemand::TrivialArbiter => {}
         _ => panic!("Expected TrivialArbiter"),
     }
@@ -94,7 +94,7 @@ async fn test_schema_arbiter_composing_decode() -> eyre::Result<()> {
 
     assert_eq!(decoded.base_arbiter, base_arbiter);
     assert_eq!(decoded.schema, schema);
-    match decoded.base_demand {
+    match decoded.base_demand.as_ref() {
         DecodedDemand::TrivialArbiter => {}
         _ => panic!("Expected TrivialArbiter"),
     }
@@ -125,7 +125,7 @@ async fn test_uid_arbiter_composing_decode() -> eyre::Result<()> {
 
     assert_eq!(decoded.base_arbiter, base_arbiter);
     assert_eq!(decoded.uid, uid);
-    match decoded.base_demand {
+    match decoded.base_demand.as_ref() {
         DecodedDemand::TrivialArbiter => {}
         _ => panic!("Expected TrivialArbiter"),
     }
@@ -156,7 +156,7 @@ async fn test_ref_uid_arbiter_composing_decode() -> eyre::Result<()> {
 
     assert_eq!(decoded.base_arbiter, base_arbiter);
     assert_eq!(decoded.ref_uid, ref_uid);
-    match decoded.base_demand {
+    match decoded.base_demand.as_ref() {
         DecodedDemand::TrivialArbiter => {}
         _ => panic!("Expected TrivialArbiter"),
     }
@@ -187,7 +187,7 @@ async fn test_revocable_arbiter_composing_decode() -> eyre::Result<()> {
 
     assert_eq!(decoded.base_arbiter, base_arbiter);
     assert_eq!(decoded.revocable, revocable);
-    match decoded.base_demand {
+    match decoded.base_demand.as_ref() {
         DecodedDemand::TrivialArbiter => {}
         _ => panic!("Expected TrivialArbiter"),
     }
@@ -218,7 +218,7 @@ async fn test_time_after_arbiter_composing_decode() -> eyre::Result<()> {
 
     assert_eq!(decoded.base_arbiter, base_arbiter);
     assert_eq!(decoded.time, time);
-    match decoded.base_demand {
+    match decoded.base_demand.as_ref() {
         DecodedDemand::TrivialArbiter => {}
         _ => panic!("Expected TrivialArbiter"),
     }
@@ -249,7 +249,7 @@ async fn test_time_before_arbiter_composing_decode() -> eyre::Result<()> {
 
     assert_eq!(decoded.base_arbiter, base_arbiter);
     assert_eq!(decoded.time, time);
-    match decoded.base_demand {
+    match decoded.base_demand.as_ref() {
         DecodedDemand::TrivialArbiter => {}
         _ => panic!("Expected TrivialArbiter"),
     }
@@ -280,7 +280,7 @@ async fn test_time_equal_arbiter_composing_decode() -> eyre::Result<()> {
 
     assert_eq!(decoded.base_arbiter, base_arbiter);
     assert_eq!(decoded.time, time);
-    match decoded.base_demand {
+    match decoded.base_demand.as_ref() {
         DecodedDemand::TrivialArbiter => {}
         _ => panic!("Expected TrivialArbiter"),
     }
@@ -311,7 +311,7 @@ async fn test_expiration_time_after_arbiter_composing_decode() -> eyre::Result<(
 
     assert_eq!(decoded.base_arbiter, base_arbiter);
     assert_eq!(decoded.expiration_time, expiration_time);
-    match decoded.base_demand {
+    match decoded.base_demand.as_ref() {
         DecodedDemand::TrivialArbiter => {}
         _ => panic!("Expected TrivialArbiter"),
     }
@@ -342,7 +342,7 @@ async fn test_expiration_time_before_arbiter_composing_decode() -> eyre::Result<
 
     assert_eq!(decoded.base_arbiter, base_arbiter);
     assert_eq!(decoded.expiration_time, expiration_time);
-    match decoded.base_demand {
+    match decoded.base_demand.as_ref() {
         DecodedDemand::TrivialArbiter => {}
         _ => panic!("Expected TrivialArbiter"),
     }
@@ -373,7 +373,7 @@ async fn test_expiration_time_equal_arbiter_composing_decode() -> eyre::Result<(
 
     assert_eq!(decoded.base_arbiter, base_arbiter);
     assert_eq!(decoded.expiration_time, expiration_time);
-    match decoded.base_demand {
+    match decoded.base_demand.as_ref() {
         DecodedDemand::TrivialArbiter => {}
         _ => panic!("Expected TrivialArbiter"),
     }

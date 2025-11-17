@@ -36,7 +36,7 @@ async fn test_decode_confirmation_arbiter_composing_demands() -> eyre::Result<()
     );
 
     // Verify the decoded base demand
-    match &decoded_result.base_demand {
+    match decoded_result.base_demand.as_ref() {
         DecodedDemand::SpecificAttestation(demand) => {
             assert_eq!(demand.uid, uid, "UID should match");
         }
@@ -60,7 +60,7 @@ async fn test_decode_confirmation_arbiter_composing_demands() -> eyre::Result<()
         "Trivial base arbiter address should match"
     );
 
-    match &trivial_decoded_result.base_demand {
+    match trivial_decoded_result.base_demand.as_ref() {
         DecodedDemand::TrivialArbiter => {
             // Expected - TrivialArbiter has no demand data
         }
@@ -108,7 +108,7 @@ async fn test_decode_revocable_confirmation_arbiter_composing_demands() -> eyre:
     );
 
     // Verify the decoded base demand
-    match &decoded_result.base_demand {
+    match decoded_result.base_demand.as_ref() {
         DecodedDemand::TrustedParty(demand) => {
             assert_eq!(
                 demand.baseArbiter, addresses.trivial_arbiter,
@@ -164,8 +164,8 @@ async fn test_decode_unrevocable_confirmation_arbiter_composing_demands() -> eyr
     );
 
     // Since we're using confirmation_arbiter_composing as base, it should decode as such
-    match &decoded_result.base_demand {
-        DecodedDemand::ConfirmationArbiterComposing => {
+    match decoded_result.base_demand.as_ref() {
+        DecodedDemand::ConfirmationArbiterComposing(_) => {
             // Expected - but this is the enum variant, not the decoded content
             // The actual nested content would need deeper decoding
         }

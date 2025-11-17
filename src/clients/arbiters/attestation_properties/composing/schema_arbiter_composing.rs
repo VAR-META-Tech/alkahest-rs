@@ -14,7 +14,7 @@ pub struct DecodedSchemaArbiterComposingDemandData {
     /// Same base arbiter address as original
     pub base_arbiter: Address,
     /// Decoded base demand instead of raw bytes
-    pub base_demand: DecodedDemand,
+    pub base_demand: Box<DecodedDemand>,
     /// Same schema bytes32 as original
     pub schema: FixedBytes<32>,
 }
@@ -31,7 +31,7 @@ impl ArbitersModule {
 
         Ok(DecodedSchemaArbiterComposingDemandData {
             base_arbiter,
-            base_demand: decoded_base_demand,
+            base_demand: Box::new(decoded_base_demand),
             schema,
         })
     }

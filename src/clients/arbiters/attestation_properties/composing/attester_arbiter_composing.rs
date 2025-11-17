@@ -14,7 +14,7 @@ pub struct DecodedAttesterArbiterComposingDemandData {
     /// Same base arbiter address as original
     pub base_arbiter: Address,
     /// Decoded base demand instead of raw bytes
-    pub base_demand: DecodedDemand,
+    pub base_demand: Box<DecodedDemand>,
     /// Same attester address as original
     pub attester: Address,
 }
@@ -31,7 +31,7 @@ impl ArbitersModule {
 
         Ok(DecodedAttesterArbiterComposingDemandData {
             base_arbiter,
-            base_demand: decoded_base_demand,
+            base_demand: Box::new(decoded_base_demand),
             attester,
         })
     }

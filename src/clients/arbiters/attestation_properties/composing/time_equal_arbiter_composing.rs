@@ -14,7 +14,7 @@ pub struct DecodedTimeEqualArbiterComposingDemandData {
     /// Same base arbiter address as original
     pub base_arbiter: Address,
     /// Decoded base demand instead of raw bytes
-    pub base_demand: DecodedDemand,
+    pub base_demand: Box<DecodedDemand>,
     /// Same time uint64 as original
     pub time: u64,
 }
@@ -31,7 +31,7 @@ impl ArbitersModule {
 
         Ok(DecodedTimeEqualArbiterComposingDemandData {
             base_arbiter,
-            base_demand: decoded_base_demand,
+            base_demand: Box::new(decoded_base_demand),
             time,
         })
     }

@@ -111,7 +111,7 @@ async fn test_decode_not_arbiter_demands() -> eyre::Result<()> {
     );
 
     // Verify the decoded base demand
-    match &decoded_result.base_demand {
+    match decoded_result.base_demand.as_ref() {
         DecodedDemand::SpecificAttestation(demand) => {
             assert_eq!(demand.uid, uid, "UID should match");
         }
@@ -134,7 +134,7 @@ async fn test_decode_not_arbiter_demands() -> eyre::Result<()> {
         "Trivial base arbiter address should match"
     );
 
-    match &trivial_decoded_result.base_demand {
+    match trivial_decoded_result.base_demand.as_ref() {
         DecodedDemand::TrivialArbiter => {
             // Expected - TrivialArbiter has no demand data
         }

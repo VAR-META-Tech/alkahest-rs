@@ -36,6 +36,22 @@ pub use attestation_properties::*;
 // Re-export logical APIs
 pub use logical::*;
 
+// Import decoded attestation property arbiter types
+use attestation_properties::composing::{
+    attester_arbiter_composing::DecodedAttesterArbiterComposingDemandData,
+    expiration_time_after_arbiter_composing::DecodedExpirationTimeAfterArbiterComposingDemandData,
+    expiration_time_before_arbiter_composing::DecodedExpirationTimeBeforeArbiterComposingDemandData,
+    expiration_time_equal_arbiter_composing::DecodedExpirationTimeEqualArbiterComposingDemandData,
+    recipient_arbiter_composing::DecodedRecipientArbiterComposingDemandData,
+    ref_uid_arbiter_composing::DecodedRefUidArbiterComposingDemandData,
+    revocable_arbiter_composing::DecodedRevocableArbiterComposingDemandData,
+    schema_arbiter_composing::DecodedSchemaArbiterComposingDemandData,
+    time_after_arbiter_composing::DecodedTimeAfterArbiterComposingDemandData,
+    time_before_arbiter_composing::DecodedTimeBeforeArbiterComposingDemandData,
+    time_equal_arbiter_composing::DecodedTimeEqualArbiterComposingDemandData,
+    uid_arbiter_composing::DecodedUidArbiterComposingDemandData,
+};
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArbitersAddresses {
     pub eas: Address,
@@ -306,17 +322,15 @@ pub enum DecodedDemand {
     IntrinsicsArbiter2(contracts::IntrinsicsArbiter2::DemandData),
 
     // Logical arbiters
-    AnyArbiter(contracts::logical::AnyArbiter::DemandData),
-    AllArbiter(contracts::logical::AllArbiter::DemandData),
-    NotArbiter(contracts::logical::NotArbiter::DemandData),
+    AnyArbiter(DecodedAnyArbiterDemandData),
+    AllArbiter(DecodedAllArbiterDemandData),
+    NotArbiter(DecodedNotArbiterDemandData),
 
-    // Confirmation arbiters (most don't have demand data)
-    ConfirmationArbiter,
-    ConfirmationArbiterComposing,
-    RevocableConfirmationArbiter,
-    RevocableConfirmationArbiterComposing,
-    UnrevocableConfirmationArbiter,
-    UnrevocableConfirmationArbiterComposing,
+    ConfirmationArbiterComposing(DecodedConfirmationArbiterComposingDemandData),
+    RevocableConfirmationArbiterComposing(DecodedRevocableConfirmationArbiterComposingDemandData),
+    UnrevocableConfirmationArbiterComposing(
+        DecodedUnrevocableConfirmationArbiterComposingDemandData,
+    ),
 
     // Payment fulfillment arbiters (no demand data)
     ERC20PaymentFulfillmentArbiter,
@@ -325,36 +339,18 @@ pub enum DecodedDemand {
     TokenBundlePaymentFulfillmentArbiter,
 
     // Attestation property arbiters - composing
-    AttesterArbiterComposing(
-        contracts::attestation_properties::composing::AttesterArbiter::DemandData,
-    ),
-    ExpirationTimeAfterArbiterComposing(
-        contracts::attestation_properties::composing::ExpirationTimeAfterArbiter::DemandData,
-    ),
-    ExpirationTimeBeforeArbiterComposing(
-        contracts::attestation_properties::composing::ExpirationTimeBeforeArbiter::DemandData,
-    ),
-    ExpirationTimeEqualArbiterComposing(
-        contracts::attestation_properties::composing::ExpirationTimeEqualArbiter::DemandData,
-    ),
-    RecipientArbiterComposing(
-        contracts::attestation_properties::composing::RecipientArbiter::DemandData,
-    ),
-    RefUidArbiterComposing(contracts::attestation_properties::composing::RefUidArbiter::DemandData),
-    RevocableArbiterComposing(
-        contracts::attestation_properties::composing::RevocableArbiter::DemandData,
-    ),
-    SchemaArbiterComposing(contracts::attestation_properties::composing::SchemaArbiter::DemandData),
-    TimeAfterArbiterComposing(
-        contracts::attestation_properties::composing::TimeAfterArbiter::DemandData,
-    ),
-    TimeBeforeArbiterComposing(
-        contracts::attestation_properties::composing::TimeBeforeArbiter::DemandData,
-    ),
-    TimeEqualArbiterComposing(
-        contracts::attestation_properties::composing::TimeEqualArbiter::DemandData,
-    ),
-    UidArbiterComposing(contracts::attestation_properties::composing::UidArbiter::DemandData),
+    AttesterArbiterComposing(DecodedAttesterArbiterComposingDemandData),
+    ExpirationTimeAfterArbiterComposing(DecodedExpirationTimeAfterArbiterComposingDemandData),
+    ExpirationTimeBeforeArbiterComposing(DecodedExpirationTimeBeforeArbiterComposingDemandData),
+    ExpirationTimeEqualArbiterComposing(DecodedExpirationTimeEqualArbiterComposingDemandData),
+    RecipientArbiterComposing(DecodedRecipientArbiterComposingDemandData),
+    RefUidArbiterComposing(DecodedRefUidArbiterComposingDemandData),
+    RevocableArbiterComposing(DecodedRevocableArbiterComposingDemandData),
+    SchemaArbiterComposing(DecodedSchemaArbiterComposingDemandData),
+    TimeAfterArbiterComposing(DecodedTimeAfterArbiterComposingDemandData),
+    TimeBeforeArbiterComposing(DecodedTimeBeforeArbiterComposingDemandData),
+    TimeEqualArbiterComposing(DecodedTimeEqualArbiterComposingDemandData),
+    UidArbiterComposing(DecodedUidArbiterComposingDemandData),
 
     // Attestation property arbiters - non-composing
     AttesterArbiterNonComposing(
@@ -433,29 +429,35 @@ impl ArbitersModule {
         } else if arbiter_addr == addresses.any_arbiter {
             let demand: crate::contracts::logical::AnyArbiter::DemandData =
                 demand_bytes.try_into()?;
-            DecodedDemand::AnyArbiter(demand)
+            DecodedDemand::AnyArbiter(self.decode_any_arbiter_demands(demand)?)
         } else if arbiter_addr == addresses.all_arbiter {
             let demand: crate::contracts::logical::AllArbiter::DemandData =
                 demand_bytes.try_into()?;
-            DecodedDemand::AllArbiter(demand)
+            DecodedDemand::AllArbiter(self.decode_all_arbiter_demands(demand)?)
         } else if arbiter_addr == addresses.not_arbiter {
             let demand: crate::contracts::logical::NotArbiter::DemandData =
                 demand_bytes.try_into()?;
-            DecodedDemand::NotArbiter(demand)
+            DecodedDemand::NotArbiter(self.decode_not_arbiter_demands(demand)?)
 
-        // Confirmation arbiters (no demand data)
-        } else if arbiter_addr == addresses.confirmation_arbiter {
-            DecodedDemand::ConfirmationArbiter
+        // Confirmation arbiters
         } else if arbiter_addr == addresses.confirmation_arbiter_composing {
-            DecodedDemand::ConfirmationArbiterComposing
-        } else if arbiter_addr == addresses.revocable_confirmation_arbiter {
-            DecodedDemand::RevocableConfirmationArbiter
+            let demand: crate::contracts::confirmation_arbiters::ConfirmationArbiterComposing::DemandData =
+                demand_bytes.try_into()?;
+            DecodedDemand::ConfirmationArbiterComposing(
+                self.decode_confirmation_arbiter_composing_demands(demand)?,
+            )
         } else if arbiter_addr == addresses.revocable_confirmation_arbiter_composing {
-            DecodedDemand::RevocableConfirmationArbiterComposing
-        } else if arbiter_addr == addresses.unrevocable_confirmation_arbiter {
-            DecodedDemand::UnrevocableConfirmationArbiter
+            let demand: crate::contracts::confirmation_arbiters::RevocableConfirmationArbiterComposing::DemandData =
+                demand_bytes.try_into()?;
+            DecodedDemand::RevocableConfirmationArbiterComposing(
+                self.decode_revocable_confirmation_arbiter_composing_demands(demand)?,
+            )
         } else if arbiter_addr == addresses.unrevocable_confirmation_arbiter_composing {
-            DecodedDemand::UnrevocableConfirmationArbiterComposing
+            let demand: crate::contracts::confirmation_arbiters::UnrevocableConfirmationArbiterComposing::DemandData =
+                demand_bytes.try_into()?;
+            DecodedDemand::UnrevocableConfirmationArbiterComposing(
+                self.decode_unrevocable_confirmation_arbiter_composing_demands(demand)?,
+            )
 
         // Payment fulfillment arbiters (no demand data)
         } else if arbiter_addr == addresses.erc20_payment_fulfillment_arbiter {
@@ -470,41 +472,63 @@ impl ArbitersModule {
         // Attestation property arbiters - composing
         } else if arbiter_addr == addresses.attester_arbiter_composing {
             let demand: crate::contracts::attestation_properties::composing::AttesterArbiter::DemandData = demand_bytes.try_into()?;
-            DecodedDemand::AttesterArbiterComposing(demand)
+            DecodedDemand::AttesterArbiterComposing(
+                self.decode_attester_arbiter_composing_demands(demand)?,
+            )
         } else if arbiter_addr == addresses.expiration_time_after_arbiter_composing {
             let demand: crate::contracts::attestation_properties::composing::ExpirationTimeAfterArbiter::DemandData = demand_bytes.try_into()?;
-            DecodedDemand::ExpirationTimeAfterArbiterComposing(demand)
+            DecodedDemand::ExpirationTimeAfterArbiterComposing(
+                self.decode_expiration_time_after_arbiter_composing_demands(demand)?,
+            )
         } else if arbiter_addr == addresses.expiration_time_before_arbiter_composing {
             let demand: crate::contracts::attestation_properties::composing::ExpirationTimeBeforeArbiter::DemandData = demand_bytes.try_into()?;
-            DecodedDemand::ExpirationTimeBeforeArbiterComposing(demand)
+            DecodedDemand::ExpirationTimeBeforeArbiterComposing(
+                self.decode_expiration_time_before_arbiter_composing_demands(demand)?,
+            )
         } else if arbiter_addr == addresses.expiration_time_equal_arbiter_composing {
             let demand: crate::contracts::attestation_properties::composing::ExpirationTimeEqualArbiter::DemandData = demand_bytes.try_into()?;
-            DecodedDemand::ExpirationTimeEqualArbiterComposing(demand)
+            DecodedDemand::ExpirationTimeEqualArbiterComposing(
+                self.decode_expiration_time_equal_arbiter_composing_demands(demand)?,
+            )
         } else if arbiter_addr == addresses.recipient_arbiter_composing {
             let demand: crate::contracts::attestation_properties::composing::RecipientArbiter::DemandData = demand_bytes.try_into()?;
-            DecodedDemand::RecipientArbiterComposing(demand)
+            DecodedDemand::RecipientArbiterComposing(
+                self.decode_recipient_arbiter_composing_demands(demand)?,
+            )
         } else if arbiter_addr == addresses.ref_uid_arbiter_composing {
             let demand: crate::contracts::attestation_properties::composing::RefUidArbiter::DemandData = demand_bytes.try_into()?;
-            DecodedDemand::RefUidArbiterComposing(demand)
+            DecodedDemand::RefUidArbiterComposing(
+                self.decode_ref_uid_arbiter_composing_demands(demand)?,
+            )
         } else if arbiter_addr == addresses.revocable_arbiter_composing {
             let demand: crate::contracts::attestation_properties::composing::RevocableArbiter::DemandData = demand_bytes.try_into()?;
-            DecodedDemand::RevocableArbiterComposing(demand)
+            DecodedDemand::RevocableArbiterComposing(
+                self.decode_revocable_arbiter_composing_demands(demand)?,
+            )
         } else if arbiter_addr == addresses.schema_arbiter_composing {
             let demand: crate::contracts::attestation_properties::composing::SchemaArbiter::DemandData = demand_bytes.try_into()?;
-            DecodedDemand::SchemaArbiterComposing(demand)
+            DecodedDemand::SchemaArbiterComposing(
+                self.decode_schema_arbiter_composing_demands(demand)?,
+            )
         } else if arbiter_addr == addresses.time_after_arbiter_composing {
             let demand: crate::contracts::attestation_properties::composing::TimeAfterArbiter::DemandData = demand_bytes.try_into()?;
-            DecodedDemand::TimeAfterArbiterComposing(demand)
+            DecodedDemand::TimeAfterArbiterComposing(
+                self.decode_time_after_arbiter_composing_demands(demand)?,
+            )
         } else if arbiter_addr == addresses.time_before_arbiter_composing {
             let demand: crate::contracts::attestation_properties::composing::TimeBeforeArbiter::DemandData = demand_bytes.try_into()?;
-            DecodedDemand::TimeBeforeArbiterComposing(demand)
+            DecodedDemand::TimeBeforeArbiterComposing(
+                self.decode_time_before_arbiter_composing_demands(demand)?,
+            )
         } else if arbiter_addr == addresses.time_equal_arbiter_composing {
             let demand: crate::contracts::attestation_properties::composing::TimeEqualArbiter::DemandData = demand_bytes.try_into()?;
-            DecodedDemand::TimeEqualArbiterComposing(demand)
+            DecodedDemand::TimeEqualArbiterComposing(
+                self.decode_time_equal_arbiter_composing_demands(demand)?,
+            )
         } else if arbiter_addr == addresses.uid_arbiter_composing {
             let demand: crate::contracts::attestation_properties::composing::UidArbiter::DemandData =
                 demand_bytes.try_into()?;
-            DecodedDemand::UidArbiterComposing(demand)
+            DecodedDemand::UidArbiterComposing(self.decode_uid_arbiter_composing_demands(demand)?)
 
         // Attestation property arbiters - non-composing
         } else if arbiter_addr == addresses.attester_arbiter_non_composing {
