@@ -11,11 +11,13 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::addresses::BASE_SEPOLIA_ADDRESSES;
 use crate::contracts::{self, ERC20Permit};
+use crate::extensions::AlkahestExtension;
+use crate::extensions::ContractModule;
 use crate::types::{
     ApprovalPurpose, ArbiterData, DecodedAttestation, Erc20Data, Erc721Data, Erc1155Data,
     TokenBundleData,
 };
-use crate::{types::WalletProvider, utils};
+use crate::types::{ProviderContext, WalletProvider};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -34,7 +36,7 @@ pub struct Erc20Addresses {
 /// - Managing token approvals and permits
 /// - Collecting payments from fulfilled trades
 #[derive(Clone)]
-pub struct Erc20Client {
+pub struct Erc20Module {
     signer: PrivateKeySigner,
     wallet_provider: WalletProvider,
 
@@ -47,8 +49,34 @@ impl Default for Erc20Addresses {
     }
 }
 
-impl Erc20Client {
-    /// Creates a new ERC20Client instance.
+/// Available contracts in the ERC20 module
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Erc20Contract {
+    /// EAS (Ethereum Attestation Service) contract
+    Eas,
+    /// Barter utilities contract for ERC20 tokens
+    BarterUtils,
+    /// Escrow obligation contract for ERC20 tokens
+    EscrowObligation,
+    /// Payment obligation contract for ERC20 tokens
+    PaymentObligation,
+}
+
+impl ContractModule for Erc20Module {
+    type Contract = Erc20Contract;
+
+    fn address(&self, contract: Self::Contract) -> Address {
+        match contract {
+            Erc20Contract::Eas => self.addresses.eas,
+            Erc20Contract::BarterUtils => self.addresses.barter_utils,
+            Erc20Contract::EscrowObligation => self.addresses.escrow_obligation,
+            Erc20Contract::PaymentObligation => self.addresses.payment_obligation,
+        }
+    }
+}
+
+impl Erc20Module {
+    /// Creates a new Erc20Module instance.
     ///
     /// # Arguments
     /// * `private_key` - The private key for signing transactions
@@ -57,15 +85,12 @@ impl Erc20Client {
     ///
     /// # Returns
     /// * `Result<Self>` - The initialized client instance
-    pub async fn new(
+    pub fn new(
         signer: PrivateKeySigner,
-        rpc_url: impl ToString + Clone,
+        wallet_provider: WalletProvider,
         addresses: Option<Erc20Addresses>,
     ) -> eyre::Result<Self> {
-        let wallet_provider = utils::get_wallet_provider(signer.clone(), rpc_url.clone()).await?;
-        println!("Using RPC URL: {}", rpc_url.to_string());
-        println!("Using addresses: {:?}", addresses);
-        Ok(Erc20Client {
+        Ok(Erc20Module {
             signer,
             wallet_provider,
 
@@ -1104,6 +1129,18 @@ impl Erc20Client {
     }
 }
 
+impl AlkahestExtension for Erc20Module {
+    type Config = Erc20Addresses;
+
+    async fn init(
+        signer: PrivateKeySigner,
+        providers: ProviderContext,
+        config: Option<Self::Config>,
+    ) -> eyre::Result<Self> {
+        Self::new(signer, (*providers.wallet).clone(), config)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::time::{SystemTime, UNIX_EPOCH};
@@ -1114,9 +1151,9 @@ mod tests {
         sol_types::SolValue,
     };
 
+    use super::Erc20Module;
     use crate::{
         DefaultAlkahestClient,
-        clients::erc20::Erc20Client,
         contracts::ERC20PaymentObligation,
         extensions::{AlkahestExtension, HasErc20, HasErc721, HasErc1155, HasTokenBundle},
         fixtures::{MockERC20Permit, MockERC721, MockERC1155},
@@ -1148,7 +1185,7 @@ mod tests {
         let encoded = escrow_data.abi_encode();
 
         // Decode the data
-        let decoded = Erc20Client::decode_escrow_obligation(&encoded.into())?;
+        let decoded = Erc20Module::decode_escrow_obligation(&encoded.into())?;
 
         // Verify decoded data
         assert_eq!(decoded.token, token_address, "Token address should match");
@@ -1179,7 +1216,7 @@ mod tests {
         let encoded = payment_data.abi_encode();
 
         // Decode the data
-        let decoded = Erc20Client::decode_payment_obligation(&encoded.into())?;
+        let decoded = Erc20Module::decode_payment_obligation(&encoded.into())?;
 
         // Verify decoded data
         assert_eq!(decoded.token, token_address, "Token address should match");
@@ -1212,7 +1249,7 @@ mod tests {
         let _receipt = test
             .alice_client
             .extensions
-            .get_client::<Erc20Client>()
+            .get_client::<Erc20Module>()
             .approve(&token, ApprovalPurpose::Payment)
             .await?;
 

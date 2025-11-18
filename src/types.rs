@@ -10,6 +10,9 @@ use alloy::{
     },
 };
 
+use alloy::signers::local::PrivateKeySigner;
+use std::sync::Arc;
+
 use crate::contracts::IEAS::Attestation;
 
 pub type WalletProvider = FillProvider<
@@ -30,6 +33,16 @@ pub type PublicProvider = FillProvider<
     >,
     RootProvider,
 >;
+
+pub type SharedWalletProvider = Arc<WalletProvider>;
+pub type SharedPublicProvider = Arc<PublicProvider>;
+
+#[derive(Clone)]
+pub struct ProviderContext {
+    pub wallet: SharedWalletProvider,
+    pub public: SharedPublicProvider,
+    pub signer: PrivateKeySigner,
+}
 
 #[derive(Debug, Clone)]
 pub struct ArbiterData {
@@ -61,6 +74,11 @@ pub struct TokenBundleData {
     pub erc20s: Vec<Erc20Data>,
     pub erc721s: Vec<Erc721Data>,
     pub erc1155s: Vec<Erc1155Data>,
+}
+
+#[derive(Debug, Clone)]
+pub struct NativeTokenData {
+    pub value: U256,
 }
 
 pub enum ApprovalPurpose {

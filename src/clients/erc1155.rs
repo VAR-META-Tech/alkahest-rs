@@ -4,12 +4,14 @@ use alloy::signers::local::PrivateKeySigner;
 use alloy::sol_types::SolValue as _;
 
 use crate::addresses::BASE_SEPOLIA_ADDRESSES;
-use crate::contracts::{self};
+use crate::contracts;
+use crate::extensions::AlkahestExtension;
+use crate::extensions::ContractModule;
+use crate::types::WalletProvider;
 use crate::types::{
     ApprovalPurpose, ArbiterData, DecodedAttestation, Erc20Data, Erc721Data, Erc1155Data,
     TokenBundleData,
 };
-use crate::{types::WalletProvider, utils};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -28,7 +30,7 @@ pub struct Erc1155Addresses {
 /// - Managing token approvals
 /// - Collecting payments from fulfilled trades
 #[derive(Clone)]
-pub struct Erc1155Client {
+pub struct Erc1155Module {
     signer: PrivateKeySigner,
     wallet_provider: WalletProvider,
 
@@ -41,8 +43,34 @@ impl Default for Erc1155Addresses {
     }
 }
 
-impl Erc1155Client {
-    /// Creates a new ERC1155Client instance.
+/// Available contracts in the ERC1155 module
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Erc1155Contract {
+    /// EAS (Ethereum Attestation Service) contract
+    Eas,
+    /// Barter utilities contract for ERC1155 tokens
+    BarterUtils,
+    /// Escrow obligation contract for ERC1155 tokens
+    EscrowObligation,
+    /// Payment obligation contract for ERC1155 tokens
+    PaymentObligation,
+}
+
+impl ContractModule for Erc1155Module {
+    type Contract = Erc1155Contract;
+
+    fn address(&self, contract: Self::Contract) -> Address {
+        match contract {
+            Erc1155Contract::Eas => self.addresses.eas,
+            Erc1155Contract::BarterUtils => self.addresses.barter_utils,
+            Erc1155Contract::EscrowObligation => self.addresses.escrow_obligation,
+            Erc1155Contract::PaymentObligation => self.addresses.payment_obligation,
+        }
+    }
+}
+
+impl Erc1155Module {
+    /// Creates a new Erc1155Module instance.
     ///
     /// # Arguments
     /// * `private_key` - The private key for signing transactions
@@ -51,14 +79,12 @@ impl Erc1155Client {
     ///
     /// # Returns
     /// * `Result<Self>` - The initialized client instance
-    pub async fn new(
+    pub fn new(
         signer: PrivateKeySigner,
-        rpc_url: impl ToString + Clone,
+        wallet_provider: WalletProvider,
         addresses: Option<Erc1155Addresses>,
     ) -> eyre::Result<Self> {
-        let wallet_provider = utils::get_wallet_provider(signer.clone(), rpc_url.clone()).await?;
-
-        Ok(Erc1155Client {
+        Ok(Erc1155Module {
             signer,
             wallet_provider,
 
@@ -571,6 +597,18 @@ impl Erc1155Client {
     }
 }
 
+impl AlkahestExtension for Erc1155Module {
+    type Config = Erc1155Addresses;
+
+    async fn init(
+        signer: PrivateKeySigner,
+        providers: crate::types::ProviderContext,
+        config: Option<Self::Config>,
+    ) -> eyre::Result<Self> {
+        Self::new(signer, (*providers.wallet).clone(), config)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::time::{SystemTime, UNIX_EPOCH};
@@ -581,9 +619,9 @@ mod tests {
         sol_types::SolValue as _,
     };
 
+    use super::Erc1155Module;
     use crate::{
         DefaultAlkahestClient,
-        clients::erc1155::Erc1155Client,
         extensions::{HasErc20, HasErc721, HasErc1155, HasTokenBundle},
         fixtures::{MockERC20Permit, MockERC721, MockERC1155},
         types::{
@@ -616,7 +654,7 @@ mod tests {
         let encoded = escrow_data.abi_encode();
 
         // Decode the data
-        let decoded = Erc1155Client::decode_escrow_obligation(&encoded.into())?;
+        let decoded = Erc1155Module::decode_escrow_obligation(&encoded.into())?;
 
         // Verify decoded data
         assert_eq!(decoded.token, token_address, "Token address should match");
@@ -650,7 +688,7 @@ mod tests {
         let encoded = payment_data.abi_encode();
 
         // Decode the data
-        let decoded = Erc1155Client::decode_payment_obligation(&encoded.into())?;
+        let decoded = Erc1155Module::decode_payment_obligation(&encoded.into())?;
 
         // Verify decoded data
         assert_eq!(decoded.token, token_address, "Token address should match");

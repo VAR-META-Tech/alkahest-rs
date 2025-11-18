@@ -8,8 +8,9 @@ use serde::{Deserialize, Serialize};
 use crate::addresses::BASE_SEPOLIA_ADDRESSES;
 use crate::contracts::IEAS::Attestation;
 use crate::contracts::{self, IEAS};
+use crate::extensions::{AlkahestExtension, ContractModule};
+use crate::types::WalletProvider;
 use crate::types::{ArbiterData, DecodedAttestation};
-use crate::{types::WalletProvider, utils};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttestationAddresses {
@@ -21,7 +22,7 @@ pub struct AttestationAddresses {
 }
 
 #[derive(Clone)]
-pub struct AttestationClient {
+pub struct AttestationModule {
     _signer: PrivateKeySigner,
     wallet_provider: WalletProvider,
 
@@ -34,24 +35,50 @@ impl Default for AttestationAddresses {
     }
 }
 
-impl AttestationClient {
-    /// Creates a new AttestationClient instance.
+/// Available contracts in the Attestation module
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AttestationContract {
+    /// EAS (Ethereum Attestation Service) contract
+    Eas,
+    /// EAS Schema Registry contract
+    EasSchemaRegistry,
+    /// Barter utilities contract for attestations
+    BarterUtils,
+    /// Escrow obligation contract for attestations
+    EscrowObligation,
+    /// Alternative escrow obligation contract for attestations
+    EscrowObligation2,
+}
+
+impl ContractModule for AttestationModule {
+    type Contract = AttestationContract;
+
+    fn address(&self, contract: Self::Contract) -> Address {
+        match contract {
+            AttestationContract::Eas => self.addresses.eas,
+            AttestationContract::EasSchemaRegistry => self.addresses.eas_schema_registry,
+            AttestationContract::BarterUtils => self.addresses.barter_utils,
+            AttestationContract::EscrowObligation => self.addresses.escrow_obligation,
+            AttestationContract::EscrowObligation2 => self.addresses.escrow_obligation_2,
+        }
+    }
+}
+
+impl AttestationModule {
+    /// Creates a new AttestationModule instance.
     ///
     /// # Arguments
     /// * `private_key` - The private key for signing transactions
     /// * `rpc_url` - The RPC endpoint URL
     /// * `addresses` - Optional custom contract addresses
-    pub async fn new(
+    pub fn new(
         signer: PrivateKeySigner,
-        rpc_url: impl ToString + Clone,
+        wallet_provider: WalletProvider,
         addresses: Option<AttestationAddresses>,
     ) -> eyre::Result<Self> {
-        let wallet_provider = utils::get_wallet_provider(signer.clone(), rpc_url.clone()).await?;
-
-        Ok(AttestationClient {
+        Ok(AttestationModule {
             _signer: signer,
             wallet_provider,
-
             addresses: addresses.unwrap_or_default(),
         })
     }
@@ -340,6 +367,17 @@ impl AttestationClient {
     }
 }
 
+impl AlkahestExtension for AttestationModule {
+    type Config = AttestationAddresses;
+    async fn init(
+        signer: PrivateKeySigner,
+        providers: crate::types::ProviderContext,
+        config: Option<Self::Config>,
+    ) -> eyre::Result<Self> {
+        Self::new(signer, (*providers.wallet).clone(), config)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use alloy::{
@@ -350,9 +388,9 @@ mod tests {
     };
     use std::time::{SystemTime, UNIX_EPOCH};
 
+    use super::AttestationModule;
     use crate::{DefaultAlkahestClient, contracts::StringObligation};
     use crate::{
-        clients::attestation::AttestationClient,
         contracts::{self, IEAS},
         extensions::{HasAttestation, HasStringObligation},
         types::ArbiterData,
@@ -469,7 +507,7 @@ mod tests {
         let encoded = escrow_data.abi_encode();
 
         // Decode the data
-        let decoded = AttestationClient::decode_escrow_obligation(&encoded.into())?;
+        let decoded = AttestationModule::decode_escrow_obligation(&encoded.into())?;
 
         // Verify decoded data
         assert_eq!(decoded.arbiter, arbiter, "Arbiter should match");
@@ -506,7 +544,7 @@ mod tests {
         let encoded = escrow_data.abi_encode();
 
         // Decode the data
-        let decoded = AttestationClient::decode_escrow_obligation_2(&encoded.into())?;
+        let decoded = AttestationModule::decode_escrow_obligation_2(&encoded.into())?;
 
         // Verify decoded data
         assert_eq!(

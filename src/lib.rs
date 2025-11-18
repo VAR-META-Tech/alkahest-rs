@@ -1,19 +1,24 @@
 use alloy::{
+    dyn_abi::SolType,
     primitives::{Address, FixedBytes, Log},
     providers::Provider,
     rpc::types::{Filter, TransactionReceipt},
     signers::local::PrivateKeySigner,
     sol_types::SolEvent,
 };
-use extensions::{AlkahestExtension, BaseExtensions};
+use extensions::{
+    AlkahestExtension, BaseExtensions, HasArbiters, HasAttestation, HasErc20, HasErc721,
+    HasErc1155, HasStringObligation, HasTokenBundle,
+};
 use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
 use sol_types::EscrowClaimed;
-use types::{PublicProvider, WalletProvider};
+use std::sync::Arc;
+use types::{SharedPublicProvider, SharedWalletProvider};
 
 use crate::clients::{
     arbiters::ArbitersAddresses, attestation::AttestationAddresses, erc20::Erc20Addresses,
-    erc721::Erc721Addresses, erc1155::Erc1155Addresses,
+    erc721::Erc721Addresses, erc1155::Erc1155Addresses, native_token::NativeTokenAddresses,
     string_obligation::StringObligationAddresses, token_bundle::TokenBundleAddresses,
 };
 
@@ -25,9 +30,21 @@ pub mod clients;
 pub mod contracts;
 pub mod extensions;
 pub mod fixtures;
+
 pub mod sol_types;
 pub mod types;
 pub mod utils;
+
+// Re-export contract types from client modules
+pub use clients::arbiters::ArbitersContract;
+pub use clients::attestation::AttestationContract;
+pub use clients::erc20::Erc20Contract;
+pub use clients::erc721::Erc721Contract;
+pub use clients::erc1155::Erc1155Contract;
+pub use clients::native_token::NativeTokenContract;
+pub use clients::string_obligation::StringObligationContract;
+pub use clients::token_bundle::TokenBundleContract;
+pub use extensions::ContractModule;
 
 /// Configuration struct containing all contract addresses for Alkahest protocol extensions.
 ///
@@ -68,6 +85,8 @@ pub struct DefaultExtensionConfig {
     pub erc721_addresses: Erc721Addresses,
     /// Addresses for ERC1155-related contracts
     pub erc1155_addresses: Erc1155Addresses,
+    /// Addresses for native token contracts
+    pub native_token_addresses: NativeTokenAddresses,
     /// Addresses for token bundle contracts that handle multiple token types
     pub token_bundle_addresses: TokenBundleAddresses,
     /// Addresses for attestation-related contracts
@@ -87,28 +106,54 @@ impl Default for DefaultExtensionConfig {
 }
 
 #[derive(Clone)]
-pub struct AlkahestClient<Extensions: AlkahestExtension = BaseExtensions> {
-    pub wallet_provider: WalletProvider,
-    pub public_provider: PublicProvider,
+pub struct AlkahestClient<Extensions: AlkahestExtension = extensions::NoExtension> {
+    pub wallet_provider: SharedWalletProvider,
+    pub public_provider: SharedPublicProvider,
     pub address: Address,
     pub extensions: Extensions,
     private_key: PrivateKeySigner,
     rpc_url: String,
-    extension_configs:
-        std::collections::HashMap<String, std::sync::Arc<dyn std::any::Any + Send + Sync>>,
 }
 
-impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
+impl AlkahestClient<extensions::NoExtension> {
+    /// Create a new client with no extensions
     pub async fn new(
         private_key: PrivateKeySigner,
         rpc_url: impl ToString + Clone + Send,
-        addresses: Option<DefaultExtensionConfig>,
     ) -> eyre::Result<Self> {
         let wallet_provider =
-            utils::get_wallet_provider(private_key.clone(), rpc_url.clone()).await?;
-        let public_provider = utils::get_public_provider(rpc_url.clone()).await?;
+            Arc::new(utils::get_wallet_provider(private_key.clone(), rpc_url.clone()).await?);
+        let public_provider = Arc::new(utils::get_public_provider(rpc_url.clone()).await?);
 
-        let extensions = Extensions::init(private_key.clone(), rpc_url.clone(), addresses).await?;
+        Ok(AlkahestClient {
+            wallet_provider,
+            public_provider,
+            address: private_key.address(),
+            extensions: extensions::NoExtension,
+            private_key,
+            rpc_url: rpc_url.to_string(),
+        })
+    }
+}
+
+impl AlkahestClient<BaseExtensions> {
+    /// Create a client with all base extensions using DefaultExtensionConfig
+    /// This is a convenience method for the common case
+    pub async fn with_base_extensions(
+        private_key: PrivateKeySigner,
+        rpc_url: impl ToString + Clone + Send,
+        config: Option<DefaultExtensionConfig>,
+    ) -> eyre::Result<Self> {
+        let wallet_provider =
+            Arc::new(utils::get_wallet_provider(private_key.clone(), rpc_url.clone()).await?);
+        let public_provider = Arc::new(utils::get_public_provider(rpc_url.clone()).await?);
+
+        let providers = crate::types::ProviderContext {
+            wallet: wallet_provider.clone(),
+            public: public_provider.clone(),
+            signer: private_key.clone(),
+        };
+        let extensions = BaseExtensions::init(private_key.clone(), providers, config).await?;
 
         Ok(AlkahestClient {
             wallet_provider,
@@ -117,25 +162,22 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
             extensions,
             private_key,
             rpc_url: rpc_url.to_string(),
-            extension_configs: std::collections::HashMap::new(),
         })
     }
+}
 
-    /// Add an extension using a custom config type
-    pub async fn with_extension<NewExt: AlkahestExtension, A: Clone + Send + Sync + 'static>(
-        mut self,
-        config: Option<A>,
+impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
+    /// Add an extension with a specific configuration
+    pub async fn extend<NewExt: AlkahestExtension>(
+        self,
+        config: Option<NewExt::Config>,
     ) -> eyre::Result<AlkahestClient<extensions::JoinExtension<Extensions, NewExt>>> {
-        // Store the config for later use if provided
-        if let Some(ref cfg) = config {
-            let type_name = std::any::type_name::<NewExt>().to_string();
-            self.extension_configs
-                .insert(type_name, std::sync::Arc::new(cfg.clone()));
-        }
-
-        let new_extension =
-            NewExt::init_with_config(self.private_key.clone(), self.rpc_url.clone(), config)
-                .await?;
+        let providers = crate::types::ProviderContext {
+            wallet: self.wallet_provider.clone(),
+            public: self.public_provider.clone(),
+            signer: self.private_key.clone(),
+        };
+        let new_extension = NewExt::init(self.private_key.clone(), providers, config).await?;
 
         let joined_extensions = extensions::JoinExtension {
             left: self.extensions,
@@ -149,45 +191,129 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
             extensions: joined_extensions,
             private_key: self.private_key,
             rpc_url: self.rpc_url,
-            extension_configs: self.extension_configs,
         })
     }
 
-    /// Add an already initialized extension to the current client
-    pub fn with_initialized_extension<NewExt: AlkahestExtension>(
+    /// Add an extension using its default configuration
+    pub async fn extend_default<NewExt: AlkahestExtension>(
         self,
-        extension: NewExt,
-    ) -> AlkahestClient<extensions::JoinExtension<Extensions, NewExt>> {
-        let joined_extensions = extensions::JoinExtension {
-            left: self.extensions,
-            right: extension,
-        };
+    ) -> eyre::Result<AlkahestClient<extensions::JoinExtension<Extensions, NewExt>>>
+    where
+        NewExt::Config: Default,
+    {
+        self.extend::<NewExt>(Some(NewExt::Config::default())).await
+    }
 
-        AlkahestClient {
-            wallet_provider: self.wallet_provider,
-            public_provider: self.public_provider,
-            address: self.address,
-            extensions: joined_extensions,
-            private_key: self.private_key,
-            rpc_url: self.rpc_url,
-            extension_configs: self.extension_configs,
+    /// Get the address of a specific ERC20 contract
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// use alkahest_rs::Erc20Contract;
+    ///
+    /// let escrow_addr = client.erc20_address(Erc20Contract::EscrowObligation);
+    /// ```
+    pub fn erc20_address(&self, contract: Erc20Contract) -> Address
+    where
+        Extensions: extensions::HasErc20,
+    {
+        match contract {
+            Erc20Contract::Eas => self.erc20().addresses.eas,
+            Erc20Contract::BarterUtils => self.erc20().addresses.barter_utils,
+            Erc20Contract::EscrowObligation => self.erc20().addresses.escrow_obligation,
+            Erc20Contract::PaymentObligation => self.erc20().addresses.payment_obligation,
         }
     }
 
-    /// Get the stored configuration for a specific extension type
-    pub fn get_extension_config<Ext: AlkahestExtension, A: Clone + Send + Sync + 'static>(
-        &self,
-    ) -> Option<&A> {
-        let type_name = std::any::type_name::<Ext>();
-        self.extension_configs
-            .get(type_name)
-            .and_then(|arc| arc.downcast_ref::<A>())
+    /// Get the address of a specific ERC721 contract
+    pub fn erc721_address(&self, contract: Erc721Contract) -> Address
+    where
+        Extensions: extensions::HasErc721,
+    {
+        match contract {
+            Erc721Contract::Eas => self.erc721().addresses.eas,
+            Erc721Contract::BarterUtils => self.erc721().addresses.barter_utils,
+            Erc721Contract::EscrowObligation => self.erc721().addresses.escrow_obligation,
+            Erc721Contract::PaymentObligation => self.erc721().addresses.payment_obligation,
+        }
     }
 
-    /// Check if a configuration exists for a specific extension type
-    pub fn has_extension_config<Ext: AlkahestExtension>(&self) -> bool {
-        let type_name = std::any::type_name::<Ext>();
-        self.extension_configs.contains_key(type_name)
+    /// Get the address of a specific ERC1155 contract
+    pub fn erc1155_address(&self, contract: Erc1155Contract) -> Address
+    where
+        Extensions: extensions::HasErc1155,
+    {
+        match contract {
+            Erc1155Contract::Eas => self.erc1155().addresses.eas,
+            Erc1155Contract::BarterUtils => self.erc1155().addresses.barter_utils,
+            Erc1155Contract::EscrowObligation => self.erc1155().addresses.escrow_obligation,
+            Erc1155Contract::PaymentObligation => self.erc1155().addresses.payment_obligation,
+        }
+    }
+
+    /// Get the address of a specific TokenBundle contract
+    pub fn token_bundle_address(&self, contract: TokenBundleContract) -> Address
+    where
+        Extensions: extensions::HasTokenBundle,
+    {
+        match contract {
+            TokenBundleContract::Eas => self.token_bundle().addresses.eas,
+            TokenBundleContract::BarterUtils => self.token_bundle().addresses.barter_utils,
+            TokenBundleContract::EscrowObligation => {
+                self.token_bundle().addresses.escrow_obligation
+            }
+            TokenBundleContract::PaymentObligation => {
+                self.token_bundle().addresses.payment_obligation
+            }
+        }
+    }
+
+    /// Get the address of a specific Attestation contract
+    pub fn attestation_address(&self, contract: AttestationContract) -> Address
+    where
+        Extensions: extensions::HasAttestation,
+    {
+        match contract {
+            AttestationContract::Eas => self.attestation().addresses.eas,
+            AttestationContract::EasSchemaRegistry => {
+                self.attestation().addresses.eas_schema_registry
+            }
+            AttestationContract::BarterUtils => self.attestation().addresses.barter_utils,
+            AttestationContract::EscrowObligation => self.attestation().addresses.escrow_obligation,
+            AttestationContract::EscrowObligation2 => {
+                self.attestation().addresses.escrow_obligation_2
+            }
+        }
+    }
+
+    /// Get the address of a specific StringObligation contract
+    pub fn string_obligation_address(&self, contract: StringObligationContract) -> Address
+    where
+        Extensions: extensions::HasStringObligation,
+    {
+        match contract {
+            StringObligationContract::Eas => self.string_obligation().addresses.eas,
+            StringObligationContract::Obligation => self.string_obligation().addresses.obligation,
+        }
+    }
+
+    /// Get the address of a specific Arbiters contract
+    pub fn arbiters_address(&self, contract: ArbitersContract) -> Address
+    where
+        Extensions: extensions::HasArbiters,
+    {
+        match contract {
+            ArbitersContract::Eas => self.arbiters().addresses.eas,
+            ArbitersContract::SpecificAttestationArbiter => {
+                self.arbiters().addresses.specific_attestation_arbiter
+            }
+            ArbitersContract::TrustedPartyArbiter => {
+                self.arbiters().addresses.trusted_party_arbiter
+            }
+            ArbitersContract::TrivialArbiter => self.arbiters().addresses.trivial_arbiter,
+            ArbitersContract::TrustedOracleArbiter => {
+                self.arbiters().addresses.trusted_oracle_arbiter
+            }
+        }
     }
 
     /// Extracts an Attested event from a transaction receipt.
@@ -258,6 +384,82 @@ impl<Extensions: AlkahestExtension> AlkahestClient<Extensions> {
         }
 
         Err(eyre::eyre!("No EscrowClaimed event found"))
+    }
+
+    /// Extract obligation data from a fulfillment attestation
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// use alkahest_rs::contracts::StringObligation;
+    ///
+    /// let obligation = client.extract_obligation_data::<StringObligation::ObligationData>(&attestation)?;
+    /// ```
+    pub fn extract_obligation_data<ObligationData: SolType>(
+        &self,
+        attestation: &contracts::IEAS::Attestation,
+    ) -> eyre::Result<ObligationData::RustType> {
+        ObligationData::abi_decode(&attestation.data).map_err(Into::into)
+    }
+
+    /// Get the escrow attestation that this fulfillment references via refUID
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// let escrow_attestation = client.get_escrow_attestation(&fulfillment_attestation).await?;
+    /// ```
+    pub async fn get_escrow_attestation(
+        &self,
+        fulfillment: &contracts::IEAS::Attestation,
+    ) -> eyre::Result<contracts::IEAS::Attestation>
+    where
+        Extensions: extensions::HasAttestation,
+    {
+        let eas = contracts::IEAS::new(self.attestation().addresses.eas, &self.wallet_provider);
+        let escrow = eas.getAttestation(fulfillment.refUID).call().await?;
+        Ok(escrow)
+    }
+
+    /// Extract demand data from an escrow attestation
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// use alkahest_rs::clients::arbiters::TrustedOracleArbiter;
+    ///
+    /// let demand = client.extract_demand_data::<TrustedOracleArbiter::DemandData>(&escrow_attestation)?;
+    /// ```
+    pub fn extract_demand_data<DemandData: SolType>(
+        &self,
+        escrow_attestation: &contracts::IEAS::Attestation,
+    ) -> eyre::Result<DemandData::RustType> {
+        use alloy::sol;
+        sol! {
+            struct ArbiterDemand {
+                address oracle;
+                bytes demand;
+            }
+        }
+        let arbiter_demand = ArbiterDemand::abi_decode(&escrow_attestation.data)?;
+        DemandData::abi_decode(&arbiter_demand.demand).map_err(Into::into)
+    }
+
+    /// Get escrow attestation and extract demand data in one call
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// use alkahest_rs::clients::arbiters::TrustedOracleArbiter;
+    ///
+    /// let (escrow, demand) = client.get_escrow_and_demand::<TrustedOracleArbiter::DemandData>(&fulfillment).await?;
+    /// ```
+    pub async fn get_escrow_and_demand<DemandData: SolType>(
+        &self,
+        fulfillment: &contracts::IEAS::Attestation,
+    ) -> eyre::Result<(contracts::IEAS::Attestation, DemandData::RustType)>
+    where
+        Extensions: extensions::HasAttestation,
+    {
+        let escrow = self.get_escrow_attestation(fulfillment).await?;
+        let demand = self.extract_demand_data::<DemandData>(&escrow)?;
+        Ok((escrow, demand))
     }
 }
 

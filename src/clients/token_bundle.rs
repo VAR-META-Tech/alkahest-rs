@@ -1,4 +1,4 @@
-use alloy::primitives::{Address, Bytes, FixedBytes, address};
+use alloy::primitives::{Address, Bytes, FixedBytes};
 use alloy::rpc::types::TransactionReceipt;
 use alloy::signers::local::PrivateKeySigner;
 use alloy::sol_types::SolValue as _;
@@ -6,10 +6,11 @@ use std::collections::HashSet;
 
 use crate::addresses::BASE_SEPOLIA_ADDRESSES;
 use crate::contracts::{self, IERC20, IERC721, IERC1155};
+use crate::extensions::ContractModule;
 use crate::types::{ArbiterData, DecodedAttestation, TokenBundleData};
 use crate::{
-    types::{ApprovalPurpose, WalletProvider},
-    utils,
+    extensions::AlkahestExtension,
+    types::{ApprovalPurpose, ProviderContext, WalletProvider},
 };
 use serde::{Deserialize, Serialize};
 
@@ -29,7 +30,7 @@ pub struct TokenBundleAddresses {
 /// - Managing token bundle payments
 /// - Collecting payments from fulfilled trades
 #[derive(Clone)]
-pub struct TokenBundleClient {
+pub struct TokenBundleModule {
     signer: PrivateKeySigner,
     wallet_provider: WalletProvider,
 
@@ -42,8 +43,34 @@ impl Default for TokenBundleAddresses {
     }
 }
 
-impl TokenBundleClient {
-    /// Creates a new TokenBundleClient instance.
+/// Available contracts in the TokenBundle module
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TokenBundleContract {
+    /// EAS (Ethereum Attestation Service) contract
+    Eas,
+    /// Barter utilities contract for token bundles
+    BarterUtils,
+    /// Escrow obligation contract for token bundles
+    EscrowObligation,
+    /// Payment obligation contract for token bundles
+    PaymentObligation,
+}
+
+impl ContractModule for TokenBundleModule {
+    type Contract = TokenBundleContract;
+
+    fn address(&self, contract: Self::Contract) -> Address {
+        match contract {
+            TokenBundleContract::Eas => self.addresses.eas,
+            TokenBundleContract::BarterUtils => self.addresses.barter_utils,
+            TokenBundleContract::EscrowObligation => self.addresses.escrow_obligation,
+            TokenBundleContract::PaymentObligation => self.addresses.payment_obligation,
+        }
+    }
+}
+
+impl TokenBundleModule {
+    /// Creates a new TokenBundleModule instance.
     ///
     /// # Arguments
     /// * `private_key` - The private key for signing transactions
@@ -52,14 +79,12 @@ impl TokenBundleClient {
     ///
     /// # Returns
     /// * `Result<Self>` - The initialized client instance
-    pub async fn new(
+    pub fn new(
         signer: PrivateKeySigner,
-        rpc_url: impl ToString + Clone,
+        wallet_provider: WalletProvider,
         addresses: Option<TokenBundleAddresses>,
     ) -> eyre::Result<Self> {
-        let wallet_provider = utils::get_wallet_provider(signer.clone(), rpc_url.clone()).await?;
-
-        Ok(TokenBundleClient {
+        Ok(TokenBundleModule {
             signer,
             wallet_provider,
 
@@ -329,9 +354,7 @@ impl TokenBundleClient {
     /// * `Result<Vec<TransactionReceipt>>` - A vector of transaction receipts for all approval transactions
     ///
     /// # Example
-    /// ```rust
-    /// let approvals = client.approve(&token_bundle, ApprovalPurpose::Escrow).await?;
-    /// ```
+    /// * let approvals = client.approve(&token_bundle, ApprovalPurpose::Escrow).await?;
     pub async fn approve(
         &self,
         bundle: &TokenBundleData,
@@ -406,6 +429,18 @@ impl TokenBundleClient {
     }
 }
 
+impl AlkahestExtension for TokenBundleModule {
+    type Config = TokenBundleAddresses;
+
+    async fn init(
+        signer: PrivateKeySigner,
+        providers: ProviderContext,
+        config: Option<Self::Config>,
+    ) -> eyre::Result<Self> {
+        Self::new(signer, (*providers.wallet).clone(), config)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::time::{SystemTime, UNIX_EPOCH};
@@ -416,11 +451,11 @@ mod tests {
         sol_types::SolValue as _,
     };
 
+    use super::TokenBundleModule;
     use crate::{
         DefaultAlkahestClient,
-        clients::token_bundle::TokenBundleClient,
         contracts::token_bundle::{TokenBundleEscrowObligation, TokenBundlePaymentObligation},
-        extensions::{HasErc20, HasErc721, HasErc1155, HasTokenBundle},
+        extensions::HasTokenBundle,
         fixtures::{MockERC20Permit, MockERC721, MockERC1155},
         types::{
             ApprovalPurpose, ArbiterData, Erc20Data, Erc721Data, Erc1155Data, TokenBundleData,
@@ -954,7 +989,7 @@ mod tests {
         let encoded = escrow_data.abi_encode();
 
         // Decode the data
-        let decoded = TokenBundleClient::decode_escrow_obligation(encoded.into())?;
+        let decoded = TokenBundleModule::decode_escrow_obligation(encoded.into())?;
 
         // Verify decoded data - note that the bundle verification would need more complex comparison
         assert_eq!(decoded.arbiter, arbiter, "Arbiter should match");
@@ -980,7 +1015,7 @@ mod tests {
         let encoded = payment_data.abi_encode();
 
         // Decode the data
-        let decoded = TokenBundleClient::decode_payment_obligation(encoded.into())?;
+        let decoded = TokenBundleModule::decode_payment_obligation(encoded.into())?;
 
         // Verify decoded data - note that the bundle verification would need more complex comparison
         assert_eq!(decoded.payee, payee, "Payee should match");

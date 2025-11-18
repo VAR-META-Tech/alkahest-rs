@@ -1,15 +1,16 @@
 use crate::{
     addresses::BASE_SEPOLIA_ADDRESSES,
     contracts,
-    types::{DecodedAttestation, WalletProvider},
+    extensions::{AlkahestExtension, ContractModule},
+    types::{DecodedAttestation, ProviderContext, WalletProvider},
 };
+use alloy::providers::Provider;
 use alloy::{
     primitives::{Address, Bytes, FixedBytes},
     rpc::types::TransactionReceipt,
     signers::local::PrivateKeySigner,
     sol_types::SolValue as _,
 };
-use alloy::{providers::Provider, rpc::types::TransactionRequest};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -19,7 +20,7 @@ pub struct StringObligationAddresses {
 }
 
 #[derive(Clone)]
-pub struct StringObligationClient {
+pub struct StringObligationModule {
     _signer: PrivateKeySigner,
     wallet_provider: WalletProvider,
 
@@ -32,26 +33,45 @@ impl Default for StringObligationAddresses {
     }
 }
 
-impl StringObligationClient {
-    /// Creates a new StringObligationClient instance.
+/// Available contracts in the StringObligation module
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StringObligationContract {
+    /// EAS (Ethereum Attestation Service) contract
+    Eas,
+    /// String obligation contract
+    Obligation,
+}
+
+impl ContractModule for StringObligationModule {
+    type Contract = StringObligationContract;
+
+    fn address(&self, contract: Self::Contract) -> Address {
+        match contract {
+            StringObligationContract::Eas => self.addresses.eas,
+            StringObligationContract::Obligation => self.addresses.obligation,
+        }
+    }
+}
+
+impl StringObligationModule {
+    /// Creates a new StringObligationModule instance.
     ///
     /// # Arguments
     /// * `private_key` - The private key for signing transactions
-    /// * `rpc_url` - The RPC endpoint URL
+    /// * `wallet_provider` - The shared wallet provider to use for sending transactions
     /// * `addresses` - Optional custom contract addresses, uses defaults if None
     ///
     /// # Returns
     /// * `Result<Self>` - The initialized client instance with all sub-clients configured
-    pub async fn new(
+    pub fn new(
         signer: PrivateKeySigner,
-        rpc_url: impl ToString + Clone,
+        wallet_provider: WalletProvider,
         addresses: Option<StringObligationAddresses>,
     ) -> eyre::Result<Self> {
-        let wallet_provider = crate::utils::get_wallet_provider(signer.clone(), rpc_url).await?;
-
-        Ok(StringObligationClient {
+        Ok(StringObligationModule {
             _signer: signer,
             wallet_provider,
+
             addresses: addresses.unwrap_or_default(),
         })
     }
@@ -145,5 +165,17 @@ impl StringObligationClient {
             .await?;
 
         Ok(receipt)
+    }
+}
+
+impl AlkahestExtension for StringObligationModule {
+    type Config = StringObligationAddresses;
+
+    async fn init(
+        signer: PrivateKeySigner,
+        providers: ProviderContext,
+        config: Option<Self::Config>,
+    ) -> eyre::Result<Self> {
+        Self::new(signer, (*providers.wallet).clone(), config)
     }
 }
