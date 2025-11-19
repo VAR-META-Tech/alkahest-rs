@@ -7,7 +7,7 @@ use crate::addresses::BASE_SEPOLIA_ADDRESSES;
 use crate::contracts;
 use crate::extensions::AlkahestExtension;
 use crate::extensions::ContractModule;
-use crate::types::WalletProvider;
+use crate::types::SharedWalletProvider;
 use crate::types::{
     ApprovalPurpose, ArbiterData, DecodedAttestation, Erc20Data, Erc721Data, Erc1155Data,
     TokenBundleData,
@@ -32,7 +32,7 @@ pub struct Erc1155Addresses {
 #[derive(Clone)]
 pub struct Erc1155Module {
     signer: PrivateKeySigner,
-    wallet_provider: WalletProvider,
+    wallet_provider: SharedWalletProvider,
 
     pub addresses: Erc1155Addresses,
 }
@@ -81,7 +81,7 @@ impl Erc1155Module {
     /// * `Result<Self>` - The initialized client instance
     pub fn new(
         signer: PrivateKeySigner,
-        wallet_provider: WalletProvider,
+        wallet_provider: SharedWalletProvider,
         addresses: Option<Erc1155Addresses>,
     ) -> eyre::Result<Self> {
         Ok(Erc1155Module {
@@ -128,7 +128,7 @@ impl Erc1155Module {
         &self,
         uid: FixedBytes<32>,
     ) -> eyre::Result<DecodedAttestation<contracts::ERC1155EscrowObligation::ObligationData>> {
-        let eas_contract = contracts::IEAS::new(self.addresses.eas, &self.wallet_provider);
+        let eas_contract = contracts::IEAS::new(self.addresses.eas, &*self.wallet_provider);
 
         let attestation = eas_contract.getAttestation(uid).call().await?;
         let obligation_data =
@@ -144,7 +144,7 @@ impl Erc1155Module {
         &self,
         uid: FixedBytes<32>,
     ) -> eyre::Result<DecodedAttestation<contracts::ERC1155PaymentObligation::ObligationData>> {
-        let eas_contract = contracts::IEAS::new(self.addresses.eas, &self.wallet_provider);
+        let eas_contract = contracts::IEAS::new(self.addresses.eas, &*self.wallet_provider);
 
         let attestation = eas_contract.getAttestation(uid).call().await?;
         let obligation_data =
@@ -169,7 +169,7 @@ impl Erc1155Module {
         token_contract: Address,
         purpose: ApprovalPurpose,
     ) -> eyre::Result<TransactionReceipt> {
-        let erc1155_contract = contracts::IERC1155::new(token_contract, &self.wallet_provider);
+        let erc1155_contract = contracts::IERC1155::new(token_contract, &*self.wallet_provider);
 
         let to = match purpose {
             ApprovalPurpose::Escrow => self.addresses.escrow_obligation,
@@ -199,7 +199,7 @@ impl Erc1155Module {
         token_contract: Address,
         purpose: ApprovalPurpose,
     ) -> eyre::Result<TransactionReceipt> {
-        let erc1155_contract = contracts::IERC1155::new(token_contract, &self.wallet_provider);
+        let erc1155_contract = contracts::IERC1155::new(token_contract, &*self.wallet_provider);
 
         let to = match purpose {
             ApprovalPurpose::Escrow => self.addresses.escrow_obligation,
@@ -231,7 +231,7 @@ impl Erc1155Module {
     ) -> eyre::Result<TransactionReceipt> {
         let escrow_contract = contracts::ERC1155EscrowObligation::new(
             self.addresses.escrow_obligation,
-            &self.wallet_provider,
+            &*self.wallet_provider,
         );
 
         let receipt = escrow_contract
@@ -257,7 +257,7 @@ impl Erc1155Module {
     ) -> eyre::Result<TransactionReceipt> {
         let escrow_contract = contracts::ERC1155EscrowObligation::new(
             self.addresses.escrow_obligation,
-            &self.wallet_provider,
+            &*self.wallet_provider,
         );
 
         let receipt = escrow_contract
@@ -287,7 +287,7 @@ impl Erc1155Module {
     ) -> eyre::Result<TransactionReceipt> {
         let escrow_obligation_contract = contracts::ERC1155EscrowObligation::new(
             self.addresses.escrow_obligation,
-            &self.wallet_provider,
+            &*self.wallet_provider,
         );
 
         let receipt = escrow_obligation_contract
@@ -324,7 +324,7 @@ impl Erc1155Module {
     ) -> eyre::Result<TransactionReceipt> {
         let payment_obligation_contract = contracts::ERC1155PaymentObligation::new(
             self.addresses.payment_obligation,
-            &self.wallet_provider,
+            &*self.wallet_provider,
         );
 
         let receipt = payment_obligation_contract
@@ -358,7 +358,7 @@ impl Erc1155Module {
         expiration: u64,
     ) -> eyre::Result<TransactionReceipt> {
         let barter_utils_contract =
-            contracts::ERC1155BarterUtils::new(self.addresses.barter_utils, &self.wallet_provider);
+            contracts::ERC1155BarterUtils::new(self.addresses.barter_utils, &*self.wallet_provider);
 
         let receipt = barter_utils_contract
             .buyErc1155ForErc1155(
@@ -390,7 +390,7 @@ impl Erc1155Module {
         buy_attestation: FixedBytes<32>,
     ) -> eyre::Result<TransactionReceipt> {
         let barter_utils_contract =
-            contracts::ERC1155BarterUtils::new(self.addresses.barter_utils, &self.wallet_provider);
+            contracts::ERC1155BarterUtils::new(self.addresses.barter_utils, &*self.wallet_provider);
 
         let receipt = barter_utils_contract
             .payErc1155ForErc1155(buy_attestation)
@@ -420,7 +420,7 @@ impl Erc1155Module {
         let barter_utils_contract =
             contracts::erc1155_barter_cross_token::ERC1155BarterCrossToken::new(
                 self.addresses.barter_utils,
-                &self.wallet_provider,
+                &*self.wallet_provider,
             );
 
         let receipt = barter_utils_contract
@@ -454,7 +454,7 @@ impl Erc1155Module {
         let barter_utils_contract =
             contracts::erc1155_barter_cross_token::ERC1155BarterCrossToken::new(
                 self.addresses.barter_utils,
-                &self.wallet_provider,
+                &*self.wallet_provider,
             );
 
         let receipt = barter_utils_contract
@@ -485,7 +485,7 @@ impl Erc1155Module {
         let barter_utils_contract =
             contracts::erc1155_barter_cross_token::ERC1155BarterCrossToken::new(
                 self.addresses.barter_utils,
-                &self.wallet_provider,
+                &*self.wallet_provider,
             );
 
         let receipt = barter_utils_contract
@@ -519,7 +519,7 @@ impl Erc1155Module {
         let barter_utils_contract =
             contracts::erc1155_barter_cross_token::ERC1155BarterCrossToken::new(
                 self.addresses.barter_utils,
-                &self.wallet_provider,
+                &*self.wallet_provider,
             );
 
         let receipt = barter_utils_contract
@@ -550,7 +550,7 @@ impl Erc1155Module {
         let barter_utils_contract =
             contracts::erc1155_barter_cross_token::ERC1155BarterCrossToken::new(
                 self.addresses.barter_utils,
-                &self.wallet_provider,
+                &*self.wallet_provider,
             );
 
         let receipt = barter_utils_contract
@@ -583,7 +583,7 @@ impl Erc1155Module {
         let barter_utils_contract =
             contracts::erc1155_barter_cross_token::ERC1155BarterCrossToken::new(
                 self.addresses.barter_utils,
-                &self.wallet_provider,
+                &*self.wallet_provider,
             );
 
         let receipt = barter_utils_contract
@@ -605,7 +605,7 @@ impl AlkahestExtension for Erc1155Module {
         providers: crate::types::ProviderContext,
         config: Option<Self::Config>,
     ) -> eyre::Result<Self> {
-        Self::new(signer, (*providers.wallet).clone(), config)
+        Self::new(signer, providers.wallet.clone(), config)
     }
 }
 

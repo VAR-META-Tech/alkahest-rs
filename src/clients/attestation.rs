@@ -9,8 +9,7 @@ use crate::addresses::BASE_SEPOLIA_ADDRESSES;
 use crate::contracts::IEAS::Attestation;
 use crate::contracts::{self, IEAS};
 use crate::extensions::{AlkahestExtension, ContractModule};
-use crate::types::WalletProvider;
-use crate::types::{ArbiterData, DecodedAttestation};
+use crate::types::{ArbiterData, DecodedAttestation, ProviderContext, SharedWalletProvider};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttestationAddresses {
@@ -24,7 +23,7 @@ pub struct AttestationAddresses {
 #[derive(Clone)]
 pub struct AttestationModule {
     _signer: PrivateKeySigner,
-    wallet_provider: WalletProvider,
+    wallet_provider: SharedWalletProvider,
 
     pub addresses: AttestationAddresses,
 }
@@ -73,7 +72,7 @@ impl AttestationModule {
     /// * `addresses` - Optional custom contract addresses
     pub fn new(
         signer: PrivateKeySigner,
-        wallet_provider: WalletProvider,
+        wallet_provider: SharedWalletProvider,
         addresses: Option<AttestationAddresses>,
     ) -> eyre::Result<Self> {
         Ok(AttestationModule {
@@ -118,7 +117,7 @@ impl AttestationModule {
         uid: FixedBytes<32>,
     ) -> eyre::Result<DecodedAttestation<contracts::AttestationEscrowObligation::ObligationData>>
     {
-        let eas_contract = contracts::IEAS::new(self.addresses.eas, &self.wallet_provider);
+        let eas_contract = contracts::IEAS::new(self.addresses.eas, &*self.wallet_provider);
 
         let attestation = eas_contract.getAttestation(uid).call().await?;
         let obligation_data =
@@ -135,7 +134,7 @@ impl AttestationModule {
         uid: FixedBytes<32>,
     ) -> eyre::Result<DecodedAttestation<contracts::AttestationEscrowObligation2::ObligationData>>
     {
-        let eas_contract = contracts::IEAS::new(self.addresses.eas, &self.wallet_provider);
+        let eas_contract = contracts::IEAS::new(self.addresses.eas, &*self.wallet_provider);
 
         let attestation = eas_contract.getAttestation(uid).call().await?;
         let obligation_data =
@@ -152,7 +151,7 @@ impl AttestationModule {
     /// # Arguments
     /// * `uid` - The unique identifier of the attestation
     pub async fn get_attestation(&self, uid: FixedBytes<32>) -> eyre::Result<Attestation> {
-        let eas_contract = contracts::IEAS::new(self.addresses.eas, &self.wallet_provider);
+        let eas_contract = contracts::IEAS::new(self.addresses.eas, &*self.wallet_provider);
 
         let attestation = eas_contract.getAttestation(uid).call().await?;
         Ok(attestation)
@@ -172,7 +171,7 @@ impl AttestationModule {
     ) -> eyre::Result<TransactionReceipt> {
         let schema_registry_contract = contracts::ISchemaRegistry::new(
             self.addresses.eas_schema_registry,
-            &self.wallet_provider,
+            &*self.wallet_provider,
         );
 
         let receipt = schema_registry_contract
@@ -193,7 +192,7 @@ impl AttestationModule {
         &self,
         attestation: IEAS::AttestationRequest,
     ) -> eyre::Result<TransactionReceipt> {
-        let eas_contract = contracts::IEAS::new(self.addresses.eas, &self.wallet_provider);
+        let eas_contract = contracts::IEAS::new(self.addresses.eas, &*self.wallet_provider);
 
         let receipt = eas_contract
             .attest(attestation)
@@ -218,7 +217,7 @@ impl AttestationModule {
     ) -> eyre::Result<TransactionReceipt> {
         let escrow_contract = contracts::AttestationEscrowObligation::new(
             self.addresses.escrow_obligation,
-            &self.wallet_provider,
+            &*self.wallet_provider,
         );
 
         let receipt = escrow_contract
@@ -245,7 +244,7 @@ impl AttestationModule {
     ) -> eyre::Result<TransactionReceipt> {
         let escrow_contract = contracts::AttestationEscrowObligation2::new(
             self.addresses.escrow_obligation_2,
-            &self.wallet_provider,
+            &*self.wallet_provider,
         );
 
         let receipt = escrow_contract
@@ -275,7 +274,7 @@ impl AttestationModule {
     ) -> eyre::Result<TransactionReceipt> {
         let attestation_escrow_obligation_contract = contracts::AttestationEscrowObligation::new(
             self.addresses.escrow_obligation,
-            &self.wallet_provider,
+            &*self.wallet_provider,
         );
 
         let receipt = attestation_escrow_obligation_contract
@@ -313,7 +312,7 @@ impl AttestationModule {
     ) -> eyre::Result<TransactionReceipt> {
         let attestation_escrow_obligation_2_contract = contracts::AttestationEscrowObligation2::new(
             self.addresses.escrow_obligation_2,
-            &self.wallet_provider,
+            &*self.wallet_provider,
         );
 
         let receipt = attestation_escrow_obligation_2_contract
@@ -348,7 +347,7 @@ impl AttestationModule {
     ) -> eyre::Result<TransactionReceipt> {
         let barter_utils_contract = contracts::AttestationBarterUtils::new(
             self.addresses.barter_utils,
-            &self.wallet_provider,
+            &*self.wallet_provider,
         );
 
         let receipt = barter_utils_contract
@@ -374,7 +373,7 @@ impl AlkahestExtension for AttestationModule {
         providers: crate::types::ProviderContext,
         config: Option<Self::Config>,
     ) -> eyre::Result<Self> {
-        Self::new(signer, (*providers.wallet).clone(), config)
+        Self::new(signer, providers.wallet.clone(), config)
     }
 }
 

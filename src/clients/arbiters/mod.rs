@@ -2,7 +2,7 @@ use crate::{
     addresses::BASE_SEPOLIA_ADDRESSES,
     contracts,
     extensions::{AlkahestExtension, ContractModule},
-    types::{PublicProvider, WalletProvider},
+    types::{SharedPublicProvider, SharedWalletProvider},
 };
 use alloy::{
     primitives::{Address, FixedBytes, Log},
@@ -86,8 +86,8 @@ pub struct ArbitersAddresses {
 
 #[derive(Clone)]
 pub struct ArbitersModule {
-    public_provider: PublicProvider,
-    wallet_provider: WalletProvider,
+    public_provider: SharedPublicProvider,
+    wallet_provider: SharedWalletProvider,
 
     pub addresses: ArbitersAddresses,
 }
@@ -138,18 +138,14 @@ impl AlkahestExtension for ArbitersModule {
         providers: crate::types::ProviderContext,
         config: Option<Self::Config>,
     ) -> eyre::Result<Self> {
-        Self::new(
-            (*providers.public).clone(),
-            (*providers.wallet).clone(),
-            config,
-        )
+        Self::new(providers.public.clone(), providers.wallet.clone(), config)
     }
 }
 
 impl ArbitersModule {
     pub fn new(
-        public_provider: PublicProvider,
-        wallet_provider: WalletProvider,
+        public_provider: SharedPublicProvider,
+        wallet_provider: SharedWalletProvider,
         addresses: Option<ArbitersAddresses>,
     ) -> eyre::Result<Self> {
         Ok(ArbitersModule {
@@ -166,7 +162,7 @@ impl ArbitersModule {
     ) -> eyre::Result<TransactionReceipt> {
         let trusted_oracle_arbiter = contracts::TrustedOracleArbiter::new(
             self.addresses.trusted_oracle_arbiter,
-            &self.wallet_provider,
+            &*self.wallet_provider,
         );
 
         let receipt = trusted_oracle_arbiter
